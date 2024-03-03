@@ -17,7 +17,8 @@ set(RESOURCES_PATH ${CMAKE_CURRENT_SOURCE_DIR}/res)
 set(SHADERS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
 
 add_executable(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cc
-                               ${CMAKE_CURRENT_SOURCE_DIR}/src/window.cc)
+                               ${CMAKE_CURRENT_SOURCE_DIR}/src/window.cc
+                               ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline.cc)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC RESOURCES_PATH="${RESOURCES_PATH}/")
 target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH="${SHADERS_PATH}/")

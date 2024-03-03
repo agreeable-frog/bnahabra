@@ -34,3 +34,5 @@
 # Build folder
 build/
 cmake-build-*/
+
+.vscode/
