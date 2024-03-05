@@ -8,8 +8,11 @@
 
 class ShaderModule {
 public:
-    enum class Type { NONE = 0, VERTEX = 1, FRAGMENT = 2, COMPUTE = 3 };
-    static const std::map<Type, GLenum> shaderTypeToGLenum;
+    enum class Type {
+        VERTEX = GL_VERTEX_SHADER,
+        FRAGMENT = GL_FRAGMENT_SHADER,
+        COMPUTE = GL_COMPUTE_SHADER
+    };
     ShaderModule(const std::string& path, Type type);
     ShaderModule(const ShaderModule& other);
     ShaderModule& operator=(const ShaderModule& other);
@@ -25,23 +28,23 @@ public:
     }
 
 private:
+    void init();
     std::string _path;
     Type _type;
     GLuint _id;
-    void init();
 };
 
-class Pipeline {
+class Program {
 public:
-    Pipeline(std::shared_ptr<const ShaderModule> pVertShader,
-             std::shared_ptr<const ShaderModule> pFragShader);
-    Pipeline(const Pipeline& other);
-    Pipeline& operator=(const Pipeline& other);
-    ~Pipeline();
-    const std::shared_ptr<const ShaderModule> getPVertShader() const {
+    Program(std::shared_ptr<const ShaderModule> pVertShader,
+            std::shared_ptr<const ShaderModule> pFragShader);
+    Program(const Program& other);
+    Program& operator=(const Program& other);
+    ~Program();
+    std::shared_ptr<const ShaderModule> getPVertShader() const {
         return _pVertShader;
     }
-    const std::shared_ptr<const ShaderModule> getPFragShader() const {
+    std::shared_ptr<const ShaderModule> getPFragShader() const {
         return _pFragShader;
     }
     GLuint getId() const {
@@ -49,8 +52,25 @@ public:
     }
 
 private:
+    void init();
     std::shared_ptr<const ShaderModule> _pVertShader;
     std::shared_ptr<const ShaderModule> _pFragShader;
     GLuint _id;
-    void init();
+};
+
+class Pipeline {
+public:
+    Pipeline(std::shared_ptr<const Program> pProgram);
+    Pipeline(const Pipeline& other);
+    Pipeline& operator=(const Pipeline& other);
+    ~Pipeline();
+    std::shared_ptr<const Program> getPProgram() const {
+        return _pProgram;
+    }
+    GLuint getVaoId() const {
+        return _vaoId;
+    }
+private:
+    std::shared_ptr<const Program> _pProgram;
+    GLuint _vaoId;
 };

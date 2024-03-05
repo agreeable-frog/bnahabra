@@ -19,10 +19,14 @@ int main() {
                                                       ShaderModule::Type::VERTEX);
     auto pFragShader = std::make_shared<ShaderModule>(std::string(SHADERS_PATH) + "test.frag",
                                                       ShaderModule::Type::FRAGMENT);
-    auto pipeline = std::make_shared<Pipeline>(pVertShader, pFragShader);
+    auto pProgram = std::make_shared<Program>(pVertShader, pFragShader);
 
     ImGui_ImplGlfw_InitForOpenGL(w.getHandle(), true);
     ImGui_ImplOpenGL3_Init();
+
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
     while (!glfwWindowShouldClose(w.getHandle())) {
         static double lastFrameTime = glfwGetTime();
@@ -33,10 +37,10 @@ int main() {
         }
         lastFrameTime = currentTime;
         glfwMakeContextCurrent(w.getHandle());
-        glUseProgram(pipeline->getId());
+        glUseProgram(pProgram->getId());
         glViewport(0, 0, w.getWidth(), w.getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glDrawArrays(GL_TRIANGLES, 0, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();

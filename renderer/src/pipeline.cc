@@ -4,12 +4,6 @@
 #include <sstream>
 #include <iostream>
 
-const std::map<ShaderModule::Type, GLenum> ShaderModule::shaderTypeToGLenum = {
-    {ShaderModule::Type::VERTEX, GL_VERTEX_SHADER},
-    {ShaderModule::Type::FRAGMENT, GL_FRAGMENT_SHADER},
-    {ShaderModule::Type::COMPUTE, GL_COMPUTE_SHADER},
-    {ShaderModule::Type::NONE, -1}};
-
 static std::string loadText(const std::string& filename) {
     std::ifstream inputSrcFile(filename, std::ios::in);
     std::stringstream textStream;
@@ -19,7 +13,7 @@ static std::string loadText(const std::string& filename) {
 
 void ShaderModule::init() {
     std::string src = loadText(_path);
-    _id = glCreateShader(shaderTypeToGLenum.at(_type));
+    _id = glCreateShader((GLenum)_type);
     char* data = new char[src.size() + 1];
     src.copy(data, src.size() + 1);
     glShaderSource(this->_id, 1, (const GLchar**)&(data), 0);
@@ -64,9 +58,9 @@ ShaderModule::~ShaderModule() {
     glDeleteShader(_id);
 }
 
-void Pipeline::init() {
+void Program::init() {
     _id = glCreateProgram();
-    if (_id == 0) throw std::runtime_error("Pipeline creation failed");
+    if (_id == 0) throw std::runtime_error("Program creation failed");
     glAttachShader(_id, _pVertShader->getId());
     glAttachShader(_id, _pFragShader->getId());
     glLinkProgram(_id);
@@ -81,21 +75,21 @@ void Pipeline::init() {
             std::cerr << logData << '\n';
             delete logData;
         }
-        throw std::runtime_error("Pipeline link failed");
+        throw std::runtime_error("Program link failed");
     }
 }
 
-Pipeline::Pipeline(std::shared_ptr<const ShaderModule> pVertShader,
+Program::Program(std::shared_ptr<const ShaderModule> pVertShader,
                    std::shared_ptr<const ShaderModule> pFragShader)
     : _pVertShader(pVertShader), _pFragShader(pFragShader) {
     init();
 }
 
-Pipeline::Pipeline(const Pipeline& other)
-    : Pipeline(other.getPVertShader(), other.getPFragShader()) {
+Program::Program(const Program& other)
+    : Program(other.getPVertShader(), other.getPFragShader()) {
 }
 
-Pipeline& Pipeline::operator=(const Pipeline& other) {
+Program& Program::operator=(const Program& other) {
     if (this == &other) {
         return *this;
     }
@@ -106,6 +100,6 @@ Pipeline& Pipeline::operator=(const Pipeline& other) {
     return *this;
 }
 
-Pipeline::~Pipeline() {
+Program::~Program() {
     glDeleteProgram(_id);
 }

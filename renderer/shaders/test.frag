@@ -1,6 +1,9 @@
 #version 330 core
 
-in vec3 test;
+#extension GL_ARB_shading_language_420pack : require
+#extension GL_ARB_explicit_attrib_location : require
+#extension GL_ARB_separate_shader_objects : require
+
 out vec4 outFragColor;
 
 void main() {
