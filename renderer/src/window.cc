@@ -14,7 +14,8 @@ Window::Window(const std::string& name, size_t width, size_t height)
     init();
 }
 
-Window::Window(const Window& other) : Window(other.getName(), other.getWidth(), other.getHeight()) {
+Window::Window(const Window& other)
+    : Window(other.getName(), other.getWidth(), other.getHeight()) {
 }
 
 Window& Window::operator=(const Window& other) {
@@ -42,7 +43,8 @@ void Window::init() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    _handle = glfwCreateWindow(_width, _height, _name.c_str(), nullptr, nullptr);
+    _handle =
+        glfwCreateWindow(_width, _height, _name.c_str(), nullptr, nullptr);
     if (_handle == nullptr) {
         throw std::runtime_error("Failed to create GLFW window");
     }
@@ -60,10 +62,11 @@ void Window::init() {
 #endif
 }
 
-void Window::debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
+void Window::debugCallback(GLenum source, GLenum type, GLuint id,
+                           GLenum severity, GLsizei length,
                            const GLchar* message, const void* userparam) {
-    std::cout << "DEBUG : source " << source << ", type " << type << ", id " << id << ", severity "
-              << severity << '\n';
+    std::cout << "DEBUG : source " << source << ", type " << type << ", id "
+              << id << ", severity " << severity << '\n';
     std::cout << std::string(message) << '\n';
 }
 

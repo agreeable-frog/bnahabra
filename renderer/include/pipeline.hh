@@ -41,10 +41,10 @@ public:
     Program(const Program& other);
     Program& operator=(const Program& other);
     ~Program();
-    std::shared_ptr<const ShaderModule> getPVertShader() const {
+    const std::shared_ptr<const ShaderModule>& getPVertShader() const {
         return _pVertShader;
     }
-    std::shared_ptr<const ShaderModule> getPFragShader() const {
+    const std::shared_ptr<const ShaderModule>& getPFragShader() const {
         return _pFragShader;
     }
     GLuint getId() const {
@@ -64,13 +64,20 @@ public:
     Pipeline(const Pipeline& other);
     Pipeline& operator=(const Pipeline& other);
     ~Pipeline();
-    std::shared_ptr<const Program> getPProgram() const {
+    const std::shared_ptr<const Program>& getPProgram() const {
         return _pProgram;
     }
     GLuint getVaoId() const {
         return _vaoId;
     }
+    void bind() const;
+    bool unbind() const;
+
 private:
+    void init();
     std::shared_ptr<const Program> _pProgram;
+    static uint _uidGenerator;
+    static uint _boundPipelineUid;
+    uint _uid;
     GLuint _vaoId;
 };

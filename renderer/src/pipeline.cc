@@ -35,7 +35,8 @@ void ShaderModule::init() {
     delete data;
 }
 
-ShaderModule::ShaderModule(const std::string& path, Type type) : _path(path), _type(type) {
+ShaderModule::ShaderModule(const std::string& path, Type type)
+    : _path(path), _type(type) {
     init();
 }
 
@@ -80,9 +81,10 @@ void Program::init() {
 }
 
 Program::Program(std::shared_ptr<const ShaderModule> pVertShader,
-                   std::shared_ptr<const ShaderModule> pFragShader)
+                 std::shared_ptr<const ShaderModule> pFragShader)
     : _pVertShader(pVertShader), _pFragShader(pFragShader) {
     init();
+    std::cout << _id << '\n';
 }
 
 Program::Program(const Program& other)
@@ -102,4 +104,55 @@ Program& Program::operator=(const Program& other) {
 
 Program::~Program() {
     glDeleteProgram(_id);
+}
+
+uint Pipeline::_uidGenerator = 0;
+uint Pipeline::_boundPipelineUid = 0;
+
+void Pipeline::init() {
+    _uid = ++_uidGenerator;
+    glGenVertexArrays(1, &_vaoId);
+}
+
+Pipeline::Pipeline(std::shared_ptr<const Program> pProgram)
+    : _pProgram(pProgram) {
+    init();
+}
+
+Pipeline::Pipeline(const Pipeline& other) : Pipeline(other.getPProgram()) {
+}
+
+Pipeline& Pipeline::operator=(const Pipeline& other) {
+    if (this == &other) {
+        return *this;
+    }
+    glDeleteVertexArrays(1, &_vaoId);
+    _pProgram = other.getPProgram();
+    init();
+    return *this;
+}
+
+Pipeline::~Pipeline() {
+    glDeleteVertexArrays(1, &_vaoId);
+}
+
+void Pipeline::bind() const {
+    _boundPipelineUid = _uid;
+    glUseProgram(_pProgram->getId());
+    glBindVertexArray(_vaoId);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glCullFace(GL_BACK);
+}
+
+bool Pipeline::unbind() const {
+    if (_uid != _boundPipelineUid) {
+        std::cerr << "Trying to unbind a pipeline that is not bound\n";
+        return false;
+    }
+    _boundPipelineUid = 0;
+    glUseProgram(0);
+    glBindVertexArray(0);
+    return true;
 }

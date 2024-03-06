@@ -30,7 +30,8 @@ private:
     size_t _width;
     size_t _height;
     void init();
-    static void debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
-                              GLsizei length, const GLchar* message, const void* userparam);
+    static void debugCallback(GLenum source, GLenum type, GLuint id,
+                              GLenum severity, GLsizei length,
+                              const GLchar* message, const void* userparam);
     static void glfwErrorCallback(int i, const char* errStr);
 };

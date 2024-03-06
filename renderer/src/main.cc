@@ -15,18 +15,15 @@ int main() {
     ImGui::CreateContext();
 
     auto w = Window("test", 960, 540);
-    auto pVertShader = std::make_shared<ShaderModule>(std::string(SHADERS_PATH) + "test.vert",
-                                                      ShaderModule::Type::VERTEX);
-    auto pFragShader = std::make_shared<ShaderModule>(std::string(SHADERS_PATH) + "test.frag",
-                                                      ShaderModule::Type::FRAGMENT);
+    auto pVertShader = std::make_shared<ShaderModule>(
+        std::string(SHADERS_PATH) + "test.vert", ShaderModule::Type::VERTEX);
+    auto pFragShader = std::make_shared<ShaderModule>(
+        std::string(SHADERS_PATH) + "test.frag", ShaderModule::Type::FRAGMENT);
     auto pProgram = std::make_shared<Program>(pVertShader, pFragShader);
+    auto pPipeline = std::make_shared<Pipeline>(pProgram);
 
-    ImGui_ImplGlfw_InitForOpenGL(w.getHandle(), true);
     ImGui_ImplOpenGL3_Init();
-
-    GLuint vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    ImGui_ImplGlfw_InitForOpenGL(w.getHandle(), true);
 
     while (!glfwWindowShouldClose(w.getHandle())) {
         static double lastFrameTime = glfwGetTime();
@@ -36,8 +33,8 @@ int main() {
             continue;
         }
         lastFrameTime = currentTime;
+        pPipeline->bind();
         glfwMakeContextCurrent(w.getHandle());
-        glUseProgram(pProgram->getId());
         glViewport(0, 0, w.getWidth(), w.getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -45,8 +42,6 @@ int main() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        float test;
-        ImGui::SliderFloat("HFOV", &test, 0.0f, 1.0f);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
