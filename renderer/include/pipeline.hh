@@ -70,7 +70,8 @@ public:
         return _vaoId;
     }
     void bind() const;
-    bool unbind() const;
+    static void unbind();
+    static uint getBoundPipelineUid();
 
 private:
     void init();

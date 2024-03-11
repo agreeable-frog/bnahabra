@@ -109,6 +109,10 @@ Program::~Program() {
 uint Pipeline::_uidGenerator = 0;
 uint Pipeline::_boundPipelineUid = 0;
 
+uint Pipeline::getBoundPipelineUid() {
+    return _boundPipelineUid;
+}
+
 void Pipeline::init() {
     _uid = ++_uidGenerator;
     glGenVertexArrays(1, &_vaoId);
@@ -146,13 +150,8 @@ void Pipeline::bind() const {
     glCullFace(GL_BACK);
 }
 
-bool Pipeline::unbind() const {
-    if (_uid != _boundPipelineUid) {
-        std::cerr << "Trying to unbind a pipeline that is not bound\n";
-        return false;
-    }
+void Pipeline::unbind() {
     _boundPipelineUid = 0;
     glUseProgram(0);
     glBindVertexArray(0);
-    return true;
 }
