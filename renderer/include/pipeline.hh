@@ -49,6 +49,8 @@ public:
     GLuint getId() const {
         return _id;
     }
+    void bind() const;
+    static void unbind();
 
 private:
     void init();
@@ -59,13 +61,10 @@ private:
 
 class Pipeline {
 public:
-    Pipeline(std::shared_ptr<const Program> pProgram);
+    Pipeline();
     Pipeline(const Pipeline& other);
     Pipeline& operator=(const Pipeline& other);
     ~Pipeline();
-    const std::shared_ptr<const Program>& getPProgram() const {
-        return _pProgram;
-    }
     GLuint getVaoId() const {
         return _vaoId;
     }
@@ -74,7 +73,5 @@ public:
 
 private:
     void init();
-    std::shared_ptr<const Program> _pProgram;
-    uint _uid;
     GLuint _vaoId;
 };

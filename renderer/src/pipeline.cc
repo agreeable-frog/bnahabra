@@ -105,17 +105,23 @@ Program::~Program() {
     glDeleteProgram(_id);
 }
 
+void Program::bind() const {
+    glUseProgram(_id);
+}
+
+void Program::unbind() {
+    glUseProgram(0);
+}
 
 void Pipeline::init() {
     glGenVertexArrays(1, &_vaoId);
 }
 
-Pipeline::Pipeline(std::shared_ptr<const Program> pProgram)
-    : _pProgram(pProgram) {
+Pipeline::Pipeline() {
     init();
 }
 
-Pipeline::Pipeline(const Pipeline& other) : Pipeline(other.getPProgram()) {
+Pipeline::Pipeline(const Pipeline& other) : Pipeline() {
 }
 
 Pipeline& Pipeline::operator=(const Pipeline& other) {
@@ -123,7 +129,6 @@ Pipeline& Pipeline::operator=(const Pipeline& other) {
         return *this;
     }
     glDeleteVertexArrays(1, &_vaoId);
-    _pProgram = other.getPProgram();
     init();
     return *this;
 }
@@ -133,7 +138,6 @@ Pipeline::~Pipeline() {
 }
 
 void Pipeline::bind() const {
-    glUseProgram(_pProgram->getId());
     glBindVertexArray(_vaoId);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_CULL_FACE);
@@ -142,6 +146,5 @@ void Pipeline::bind() const {
 }
 
 void Pipeline::unbind() {
-    glUseProgram(0);
     glBindVertexArray(0);
 }

@@ -17,6 +17,7 @@ struct AttributeDescriptor {
     GLuint location;
     GLint size;
     GLenum type;
+    GLboolean normalized;
     size_t offset;
 };
 
@@ -64,7 +65,7 @@ public:
     ~Buffer() {
         glDeleteBuffers(1, &_id);
     }
-    void bind() {
+    void bind() const {
         glBindBuffer((GLenum)_target, _id);
     }
     void unbind() {
@@ -73,6 +74,25 @@ public:
     template <typename U = T>
     typename std::enable_if<std::is_base_of<Vertex, U>::value>::type
     vertexAttrib() {
+        BindingDescriptor bindingDescriptor = T().getBindingDescriptor();
+        std::vector<AttributeDescriptor> attributeDescritors =
+            T().getAttributeDescriptors();
+        bind();
+        for (const auto& attributeDescriptor : attributeDescritors) {
+            glVertexAttribPointer(
+                attributeDescriptor.location, attributeDescriptor.size,
+                attributeDescriptor.type, attributeDescriptor.normalized,
+                bindingDescriptor.stride, (void*)attributeDescriptor.offset);
+            glVertexAttribDivisor(attributeDescriptor.location, bindingDescriptor.divisor);
+            glEnableVertexAttribArray(attributeDescriptor.location);
+        }
+        unbind();
+    }
+
+    void bufferData() {
+        bind();
+        glBufferData((GLenum)_target, this->size() * sizeof(T), this->data(), (GLenum)_usage);
+        unbind();
     }
 
 private:
