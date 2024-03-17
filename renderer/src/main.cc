@@ -6,12 +6,14 @@
 #include "window.hh"
 #include "pipeline.hh"
 #include "buffer.hh"
+#include "camera.hh"
 
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 struct TestVertex : public Vertex {
     glm::vec3 _pos;
@@ -57,10 +59,13 @@ int main() {
     indexBuffer.insert(indexBuffer.end(), {0, 1, 2});
     indexBuffer.bufferData();
     auto meshBuffer = Buffer<TestVertex>(Target::VERTEX, Usage::STATIC);
-    meshBuffer.insert(meshBuffer.end(), {{glm::vec3(0.0f, 1.0f, 0.0f)},
-                                         {glm::vec3(-1.0f, 0.0f, 0.0f)},
-                                         {glm::vec3(1.0f, 0.0f, 0.0f)}});
+    meshBuffer.insert(meshBuffer.end(), {{glm::vec3(0.0f, 1.0f, -1.0f)},
+                                         {glm::vec3(-1.0f, 0.0f, -1.0f)},
+                                         {glm::vec3(1.0f, 0.0f, -1.0f)}});
     meshBuffer.bufferData();
+
+    Camera camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f),
+                  glm::vec3(0.0f, 0.0f, -1.0f), 0.1f, 50.0f, M_PI/2);
 
     pipeline.bind();
     indexBuffer.bind();
@@ -83,6 +88,9 @@ int main() {
         glfwMakeContextCurrent(w.getHandle());
         glViewport(0, 0, w.getWidth(), w.getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUniformMatrix4fv(0, 1, GL_FALSE,
+                           glm::value_ptr(camera.projection(w.getRatio())));
+        glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(camera.view()));
         glDrawElements(GL_TRIANGLES, indexBuffer.size(), GL_UNSIGNED_INT, 0);
 
         ImGui_ImplOpenGL3_NewFrame();

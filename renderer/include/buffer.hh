@@ -8,23 +8,7 @@
 #include <iostream>
 #include <type_traits>
 
-struct BindingDescriptor {
-    GLsizei stride;
-    GLuint divisor;
-};
-
-struct AttributeDescriptor {
-    GLuint location;
-    GLint size;
-    GLenum type;
-    GLboolean normalized;
-    size_t offset;
-};
-
-struct Vertex {
-    virtual BindingDescriptor getBindingDescriptor() = 0;
-    virtual std::vector<AttributeDescriptor> getAttributeDescriptors() = 0;
-};
+#include "vertex.hh"
 
 enum class Target { VERTEX = GL_ARRAY_BUFFER, INDEX = GL_ELEMENT_ARRAY_BUFFER };
 

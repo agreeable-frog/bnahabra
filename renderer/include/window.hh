@@ -23,6 +23,9 @@ public:
     size_t getHeight() const {
         return _height;
     }
+    float getRatio() const {
+        return (float)_width/(float)_height;
+    }
 
 private:
     GLFWwindow* _handle;

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.8)
 
 project(bnahabra-renderer VERSION 1.0 LANGUAGES CXX)
 
@@ -18,11 +18,13 @@ set(SHADERS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
 
 add_executable(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cc
                                ${CMAKE_CURRENT_SOURCE_DIR}/src/window.cc
-                               ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline.cc)
+                               ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline.cc
+                               ${CMAKE_CURRENT_SOURCE_DIR}/src/mesh.cc
+                               ${CMAKE_CURRENT_SOURCE_DIR}/src/camera.cc)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC RESOURCES_PATH="${RESOURCES_PATH}/")
 target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH="${SHADERS_PATH}/")
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Imgui::Imgui glfw OpenGL::OpenGL GLEW::GLEW glm::glm)
+target_link_libraries(${PROJECT_NAME} PRIVATE Imgui::Imgui glfw OpenGL::GL GLEW::GLEW glm::glm)
