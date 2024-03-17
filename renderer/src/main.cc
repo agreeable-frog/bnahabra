@@ -5,6 +5,7 @@
 #include "imgui_impl_opengl3.h"
 #include "window.hh"
 #include "pipeline.hh"
+#include "buffer.hh"
 
 #include <GL/glew.h>
 #include <GL/gl.h>
@@ -21,6 +22,9 @@ int main() {
         std::string(SHADERS_PATH) + "test.frag", ShaderModule::Type::FRAGMENT);
     auto pProgram = std::make_shared<Program>(pVertShader, pFragShader);
     auto pPipeline = std::make_shared<Pipeline>(pProgram);
+
+    auto buffer = Buffer<uint32_t>(Target::INDEX, Usage::STATIC);
+    buffer.bind();
 
     ImGui_ImplOpenGL3_Init();
     ImGui_ImplGlfw_InitForOpenGL(w.getHandle(), true);

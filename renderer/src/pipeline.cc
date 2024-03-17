@@ -84,7 +84,6 @@ Program::Program(std::shared_ptr<const ShaderModule> pVertShader,
                  std::shared_ptr<const ShaderModule> pFragShader)
     : _pVertShader(pVertShader), _pFragShader(pFragShader) {
     init();
-    std::cout << _id << '\n';
 }
 
 Program::Program(const Program& other)
@@ -106,15 +105,8 @@ Program::~Program() {
     glDeleteProgram(_id);
 }
 
-uint Pipeline::_uidGenerator = 0;
-uint Pipeline::_boundPipelineUid = 0;
-
-uint Pipeline::getBoundPipelineUid() {
-    return _boundPipelineUid;
-}
 
 void Pipeline::init() {
-    _uid = ++_uidGenerator;
     glGenVertexArrays(1, &_vaoId);
 }
 
@@ -141,7 +133,6 @@ Pipeline::~Pipeline() {
 }
 
 void Pipeline::bind() const {
-    _boundPipelineUid = _uid;
     glUseProgram(_pProgram->getId());
     glBindVertexArray(_vaoId);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -151,7 +142,6 @@ void Pipeline::bind() const {
 }
 
 void Pipeline::unbind() {
-    _boundPipelineUid = 0;
     glUseProgram(0);
     glBindVertexArray(0);
 }

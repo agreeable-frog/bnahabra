@@ -71,13 +71,10 @@ public:
     }
     void bind() const;
     static void unbind();
-    static uint getBoundPipelineUid();
 
 private:
     void init();
     std::shared_ptr<const Program> _pProgram;
-    static uint _uidGenerator;
-    static uint _boundPipelineUid;
     uint _uid;
     GLuint _vaoId;
 };
