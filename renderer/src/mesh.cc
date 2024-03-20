@@ -3,13 +3,13 @@
 #include <algorithm>
 #include <iostream>
 
-BindingDescriptor MeshVertex::getBindingDescriptor() {
+BindingDescriptor MeshVertex::getBindingDescriptor() const {
     BindingDescriptor bindingDescriptor;
     bindingDescriptor.stride = sizeof(MeshVertex);
     bindingDescriptor.divisor = 0;
     return bindingDescriptor;
 }
-std::vector<AttributeDescriptor> MeshVertex::getAttributeDescriptors() {
+std::vector<AttributeDescriptor> MeshVertex::getAttributeDescriptors() const {
     std::vector<AttributeDescriptor> attributeDescriptors(
         3, AttributeDescriptor());
 
@@ -17,19 +17,19 @@ std::vector<AttributeDescriptor> MeshVertex::getAttributeDescriptors() {
     attributeDescriptors[0].size = 3;
     attributeDescriptors[0].type = GL_FLOAT;
     attributeDescriptors[0].normalized = GL_FALSE;
-    attributeDescriptors[0].offset = offsetof(MeshVertex, pos);
+    attributeDescriptors[0].offset = offsetof(MeshVertex, pos); // OK
 
-    attributeDescriptors[1].location = 0;
+    attributeDescriptors[1].location = 1;
     attributeDescriptors[1].size = 3;
     attributeDescriptors[1].type = GL_FLOAT;
     attributeDescriptors[1].normalized = GL_FALSE;
-    attributeDescriptors[1].offset = offsetof(MeshVertex, normal);
+    attributeDescriptors[1].offset = offsetof(MeshVertex, normal); // OK
 
-    attributeDescriptors[2].location = 0;
+    attributeDescriptors[2].location = 2;
     attributeDescriptors[2].size = 2;
     attributeDescriptors[2].type = GL_FLOAT;
     attributeDescriptors[2].normalized = GL_FALSE;
-    attributeDescriptors[2].offset = offsetof(MeshVertex, uv);
+    attributeDescriptors[2].offset = offsetof(MeshVertex, uv); // OK
 
     return attributeDescriptors;
 }
@@ -41,7 +41,7 @@ MeshVertex::MeshVertex(glm::vec3 pos, glm::vec3 normal, glm::vec2 uv)
 MeshVertex::MeshVertex() {
 }
 
-void Mesh::registerInBuffer(std::vector<MeshVertex>& vertexBuffer, std::vector<uint32_t>& indexBuffer) {
+void Mesh::registerInBuffer(Buffer<MeshVertex>& vertexBuffer, Buffer<uint32_t>& indexBuffer) {
     _indexOffset = indexBuffer.size();
     auto vertexBufferSize = vertexBuffer.size();
 

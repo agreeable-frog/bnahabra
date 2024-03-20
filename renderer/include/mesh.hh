@@ -4,11 +4,11 @@
 #include <string>
 
 #include "vertex.hh"
+#include "buffer.hh"
 
-class MeshVertex : public Vertex {
-public:
-    BindingDescriptor getBindingDescriptor() override;
-    std::vector<AttributeDescriptor> getAttributeDescriptors() override;
+struct MeshVertex : public Vertex {
+    BindingDescriptor getBindingDescriptor() const override;
+    std::vector<AttributeDescriptor> getAttributeDescriptors() const override;
     MeshVertex(glm::vec3 pos, glm::vec3 normal, glm::vec2 uv);
     MeshVertex();
     glm::vec3 pos;
@@ -17,6 +17,16 @@ public:
 };
 
 class Mesh {
+public:
+    size_t getIndexOffset() const {
+        return _indexOffset;
+    }
+    size_t getIndexSize() const {
+        return _indices.size();
+    }
+    void registerInBuffer(Buffer<MeshVertex>& vertexBuffer,
+                          Buffer<uint32_t>& indexBuffer);
+    // static Mesh loadFromOBJ(const std::string& path);
 protected:
     Mesh() {
         static int counter = 0;
@@ -26,16 +36,6 @@ protected:
     std::vector<MeshVertex> _vertices;
     std::vector<uint32_t> _indices;
     size_t _indexOffset;
-
-public:
-    size_t getIndexOffset() const {
-        return _indexOffset;
-    }
-    size_t getIndexSize() const {
-        return _indices.size();
-    }
-    void registerInBuffer(std::vector<MeshVertex>& vertexBuffer, std::vector<uint32_t>& indexBuffer);
-    // static Mesh loadFromOBJ(const std::string& path);
 };
 
 class CubeMesh : public Mesh {

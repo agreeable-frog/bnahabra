@@ -7,41 +7,24 @@
 #include "pipeline.hh"
 #include "buffer.hh"
 #include "camera.hh"
+#include "mesh.hh"
+#include "object.hh"
 
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <map>
 
-struct TestVertex : public Vertex {
-    glm::vec3 _pos;
-    BindingDescriptor getBindingDescriptor() override {
-        BindingDescriptor bindingDescriptor;
-        bindingDescriptor.stride = sizeof(TestVertex);
-        bindingDescriptor.divisor = 0;
-        return bindingDescriptor;
+std::map<std::shared_ptr<Mesh>, std::vector<const Object&>> instanciate(
+    const std::vector<const Object&>& objects) {
+    std::map<std::shared_ptr<Mesh>, std::vector<const Object&>> instances;
+    for (const Object& object : objects) {
+        instances[object.getPMesh()].push_back(object);
     }
-    std::vector<AttributeDescriptor> getAttributeDescriptors() override {
-        std::vector<AttributeDescriptor> attributeDescriptors(
-            1, AttributeDescriptor());
-
-        attributeDescriptors[0].location = 0;
-        attributeDescriptors[0].size = 3;
-        attributeDescriptors[0].type = GL_FLOAT;
-        attributeDescriptors[0].normalized = GL_FALSE;
-        attributeDescriptors[0].offset = offsetof(TestVertex, _pos);
-
-        return attributeDescriptors;
-    }
-
-    TestVertex(glm::vec3 pos) : _pos(pos) {
-    }
-
-    TestVertex() {
-    }
-};
+    return instances;
+}
 
 int main() {
     IMGUI_CHECKVERSION();
@@ -56,23 +39,25 @@ int main() {
     auto pipeline = Pipeline();
 
     auto indexBuffer = Buffer<uint32_t>(Target::INDEX, Usage::STATIC);
-    indexBuffer.insert(indexBuffer.end(), {0, 1, 2});
+    auto meshBuffer = Buffer<MeshVertex>(Target::VERTEX, Usage::STATIC);
+    auto instanceBuffer = Buffer<InstanceVertex>(Target::VERTEX, Usage::STREAM);
+    auto cube = std::make_shared<CubeMesh>();
+    cube->registerInBuffer(meshBuffer, indexBuffer);
     indexBuffer.bufferData();
-    auto meshBuffer = Buffer<TestVertex>(Target::VERTEX, Usage::STATIC);
-    meshBuffer.insert(meshBuffer.end(), {{glm::vec3(0.0f, 1.0f, -1.0f)},
-                                         {glm::vec3(-1.0f, 0.0f, -1.0f)},
-                                         {glm::vec3(1.0f, 0.0f, -1.0f)}});
     meshBuffer.bufferData();
-
-    Camera camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f),
-                  glm::vec3(0.0f, 0.0f, -1.0f), 0.1f, 50.0f, M_PI/2);
 
     pipeline.bind();
     indexBuffer.bind();
     meshBuffer.vertexAttrib();
     pipeline.unbind();
 
-    ImGui_ImplOpenGL3_Init();
+    Camera camera(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
+                  glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
+    std::vector<Object> objects;
+    objects.push_back(Object(cube, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f},
+                             {1.0f, 1.0f, 1.0f}));
+
+    ImGui_ImplOpenGL3_Init("#version 330 core");
     ImGui_ImplGlfw_InitForOpenGL(w.getHandle(), true);
 
     while (!glfwWindowShouldClose(w.getHandle())) {
