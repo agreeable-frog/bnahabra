@@ -11,7 +11,9 @@ static std::string loadText(const std::string& filename) {
     return textStream.str();
 }
 
-void ShaderModule::init() {
+void ShaderModule::init(const std::string& path, Type type) {
+    _path = path;
+    _type = type;
     std::string src = loadText(_path);
     _id = glCreateShader((GLenum)_type);
     char* data = new char[src.size() + 1];
@@ -35,9 +37,8 @@ void ShaderModule::init() {
     delete data;
 }
 
-ShaderModule::ShaderModule(const std::string& path, Type type)
-    : _path(path), _type(type) {
-    init();
+ShaderModule::ShaderModule(const std::string& path, Type type) {
+    init(path, type);
 }
 
 ShaderModule::ShaderModule(const ShaderModule& other)
@@ -49,9 +50,7 @@ ShaderModule& ShaderModule::operator=(const ShaderModule& other) {
         return *this;
     }
     glDeleteShader(_id);
-    _path = other.getPath();
-    _type = other.getType();
-    init();
+    init(other.getPath(), other.getType());
     return *this;
 }
 
@@ -59,7 +58,10 @@ ShaderModule::~ShaderModule() {
     glDeleteShader(_id);
 }
 
-void Program::init() {
+void Program::init(std::shared_ptr<const ShaderModule> pVertShader,
+                   std::shared_ptr<const ShaderModule> pFragShader) {
+    _pVertShader = pVertShader;
+    _pFragShader = pFragShader;
     _id = glCreateProgram();
     if (_id == 0) throw std::runtime_error("Program creation failed");
     glAttachShader(_id, _pVertShader->getId());
@@ -81,9 +83,8 @@ void Program::init() {
 }
 
 Program::Program(std::shared_ptr<const ShaderModule> pVertShader,
-                 std::shared_ptr<const ShaderModule> pFragShader)
-    : _pVertShader(pVertShader), _pFragShader(pFragShader) {
-    init();
+                 std::shared_ptr<const ShaderModule> pFragShader) {
+    init(pVertShader, pFragShader);
 }
 
 Program::Program(const Program& other)
@@ -95,9 +96,7 @@ Program& Program::operator=(const Program& other) {
         return *this;
     }
     glDeleteProgram(_id);
-    _pVertShader = other.getPVertShader();
-    _pFragShader = other.getPFragShader();
-    init();
+    init(other.getPVertShader(), other.getPFragShader());
     return *this;
 }
 

@@ -21,7 +21,8 @@ add_executable(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cc
                                ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline.cc
                                ${CMAKE_CURRENT_SOURCE_DIR}/src/mesh.cc
                                ${CMAKE_CURRENT_SOURCE_DIR}/src/camera.cc
-                               ${CMAKE_CURRENT_SOURCE_DIR}/src/object.cc)
+                               ${CMAKE_CURRENT_SOURCE_DIR}/src/object.cc
+                               ${CMAKE_CURRENT_SOURCE_DIR}/src/framebuffer.cc)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC RESOURCES_PATH="${RESOURCES_PATH}/")
 target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH="${SHADERS_PATH}/")

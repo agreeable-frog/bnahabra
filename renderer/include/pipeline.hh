@@ -27,10 +27,10 @@ public:
     }
 
 private:
-    void init();
     std::string _path;
     Type _type;
     GLuint _id;
+    void init(const std::string& path, Type type);
 };
 
 class Program {
@@ -50,13 +50,14 @@ public:
         return _id;
     }
     void bind() const;
-    static void unbind();
+    void unbind();
 
 private:
-    void init();
     std::shared_ptr<const ShaderModule> _pVertShader;
     std::shared_ptr<const ShaderModule> _pFragShader;
     GLuint _id;
+    void init(std::shared_ptr<const ShaderModule> pVertShader,
+              std::shared_ptr<const ShaderModule> pFragShader);
 };
 
 class Pipeline {
