@@ -3,7 +3,7 @@
 #include <memory>
 #include <glm/glm.hpp>
 
-#include "mesh.hh"
+#include "renderer/mesh.hh"
 
 struct InstanceVertex : public Vertex {
     BindingDescriptor getBindingDescriptor() const override;

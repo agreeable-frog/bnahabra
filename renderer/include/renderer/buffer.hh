@@ -8,7 +8,7 @@
 #include <iostream>
 #include <type_traits>
 
-#include "vertex.hh"
+#include "renderer/vertex.hh"
 
 enum class Target { VERTEX = GL_ARRAY_BUFFER, INDEX = GL_ELEMENT_ARRAY_BUFFER };
 

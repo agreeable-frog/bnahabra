@@ -3,8 +3,8 @@
 #include <glm/glm.hpp>
 #include <string>
 
-#include "vertex.hh"
-#include "buffer.hh"
+#include "renderer/vertex.hh"
+#include "renderer/buffer.hh"
 
 struct MeshVertex : public Vertex {
     BindingDescriptor getBindingDescriptor() const override;

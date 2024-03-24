@@ -1,4 +1,4 @@
-#include "mesh.hh"
+#include "renderer/mesh.hh"
 
 #include <algorithm>
 #include <iostream>

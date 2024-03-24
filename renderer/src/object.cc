@@ -1,4 +1,4 @@
-#include "object.hh"
+#include "renderer/object.hh"
 
 #include <glm/gtx/transform.hpp>
 

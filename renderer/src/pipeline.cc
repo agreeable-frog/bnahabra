@@ -1,4 +1,4 @@
-#include "pipeline.hh"
+#include "renderer/pipeline.hh"
 
 #include <fstream>
 #include <sstream>
