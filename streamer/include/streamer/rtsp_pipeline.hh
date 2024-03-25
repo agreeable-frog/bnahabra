@@ -12,7 +12,8 @@
 struct ImageBuffer {
     unsigned char* data;
     size_t size;
-    ImageBuffer(unsigned char* data, size_t size) : data(data), size(size) {
+    int id;
+    ImageBuffer(unsigned char* data, size_t size, int frameId) : data(data), size(size), id(frameId) {
     }
     ImageBuffer(const ImageBuffer& other) {
         size = other.size;
@@ -34,17 +35,28 @@ struct ImageBuffer {
 
 class SafeQueue {
 public:
+    void enable() {
+        std::lock_guard<std::mutex> lock(mutex);
+        enabled = true;
+    }
+    void disable() {
+        std::lock_guard<std::mutex> lock(mutex);
+        enabled = false;
+    }
     void enqueue(std::shared_ptr<ImageBuffer> buffer) {
         std::lock_guard<std::mutex> lock(mutex);
-        if (queue.size() > 1) return;
-        queue.push(buffer);
+        if (!enabled) return;
+        if (queue.size() < 2) queue.push(buffer);
         condVar.notify_one();
     }
     std::shared_ptr<ImageBuffer> dequeue() {
         std::unique_lock<std::mutex> lock(mutex);
-        condVar.wait(lock, [&] { return !queue.empty(); });
+        while (queue.empty()) {
+            std::cout << "queue empty\n";
+            condVar.wait(lock);
+        }
         std::shared_ptr<ImageBuffer> val = queue.front();
-        if (queue.size() >= 1) queue.pop();
+        queue.pop();
         return val;
     }
 
@@ -52,6 +64,7 @@ private:
     std::queue<std::shared_ptr<ImageBuffer>> queue;
     mutable std::mutex mutex;
     std::condition_variable condVar;
+    bool enabled = false;
 };
 
 class Executor {

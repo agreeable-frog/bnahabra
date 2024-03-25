@@ -55,6 +55,7 @@ void Window::init() {
     }
     glfwSwapInterval(0);
     glfwSetErrorCallback(&Window::glfwErrorCallback);
+    glfwSetKeyCallback(_handle, &Window::keyCallback);
 #ifndef NDEBUG
     glDebugMessageCallback(&Window::debugCallback, 0);
     glEnable(GL_DEBUG_OUTPUT);
@@ -72,4 +73,15 @@ void Window::debugCallback(GLenum source, GLenum type, GLuint id,
 
 void Window::glfwErrorCallback(int i, const char* errStr) {
     std::cerr << "ERROR : " << errStr << '\n';
+}
+
+void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action,
+                         int mods) {
+    void* userPtr = glfwGetWindowUserPointer(window);
+    Window* pWindow = (Window*)userPtr;
+    if (action == GLFW_PRESS) {
+        pWindow->addKeyState(key, true);
+    } else if (action == GLFW_RELEASE) {
+        pWindow->addKeyState(key, false);
+    }
 }

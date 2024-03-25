@@ -1,12 +1,17 @@
 #pragma once
 
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <map>
 
 class Camera {
 public:
     Camera(glm::vec3 position, glm::vec3 axis, glm::vec3 forward, float nearClip, float farClip, float horizontalFov);
     glm::mat4 projection(float ratio) const;
     glm::mat4 view() const;
+    void processKeys(const std::map<int, bool>& keyStates, float delta);
+    void move(glm::vec3 move);
 private:
     glm::vec3 _position;
     glm::vec3 _axis;

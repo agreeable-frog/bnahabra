@@ -6,21 +6,32 @@
 #include <gst/app/gstappsrc.h>
 #include <thread>
 
-static gboolean read_data(GstElement* appsrc, guint unused,
-                          gpointer userdata) {
+#define APPSRC_FRAMERATE 20
+
+static gboolean read_data(GstElement* appsrc, guint size, gpointer userdata) {
+    static GstClockTime timestamp = 0;
     SafeQueue* queue = (SafeQueue*)userdata;
     GstFlowReturn ret;
     GstBuffer* buffer;
 
     std::shared_ptr<ImageBuffer> image = queue->dequeue();
+    std::cout << "Reading frame " << image->id << '\n';
 
     buffer = gst_buffer_new_and_alloc(960 * 540 * 3);
     gst_buffer_fill(buffer, 0, image->data, 960 * 540 * 3);
-    // gst_buffer_memset(buffer, 0, 0xff, 960 * 540 * 3);
+    GST_BUFFER_PTS(buffer) = timestamp;
+    GST_BUFFER_DURATION(buffer) =
+        gst_util_uint64_scale_int(1, GST_SECOND, APPSRC_FRAMERATE);
+
+    timestamp += GST_BUFFER_DURATION(buffer);
 
     g_signal_emit_by_name(appsrc, "push-buffer", buffer, &ret);
-
+    if (ret != GST_FLOW_OK) {
+        g_signal_emit_by_name(appsrc, "end-of-stream", &ret);
+        return FALSE;
+    }
     gst_buffer_unref(buffer);
+    return TRUE;
 }
 
 /* called when a new media pipeline is constructed. We can query the
@@ -36,19 +47,19 @@ static void media_configure(GstRTSPMediaFactory* factory, GstRTSPMedia* media,
     appsrc = gst_bin_get_by_name_recurse_up(GST_BIN(element), "mysrc");
 
     /* configure the caps of the video */
-    g_object_set(
-        G_OBJECT(appsrc), "caps",
-        gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "RGB",
-                            "width", G_TYPE_INT, 960, "height", G_TYPE_INT, 540,
-                            "framerate", GST_TYPE_FRACTION, 0, 1, NULL),
-        NULL);
+    g_object_set(G_OBJECT(appsrc), "caps",
+                 gst_caps_new_simple(
+                     "video/x-raw", "format", G_TYPE_STRING, "RGB", "width",
+                     G_TYPE_INT, 960, "height", G_TYPE_INT, 540, "framerate",
+                     GST_TYPE_FRACTION, APPSRC_FRAMERATE, 1, NULL),
+                 NULL);
     g_object_set(G_OBJECT(appsrc), "is-live", TRUE, "stream-type", 0, "format",
                  GST_FORMAT_TIME, "do-timestamp", TRUE, NULL);
     g_signal_connect(appsrc, "need-data", G_CALLBACK(read_data), user_data);
 
     gst_object_unref(appsrc);
     gst_object_unref(element);
-    std::cout << "configured ok\n";
+    std::cout << "media configured ok\n";
 }
 
 void Executor::workerLoop(int argc, char** argv) {
@@ -72,12 +83,15 @@ void Executor::workerLoop(int argc, char** argv) {
     factory = gst_rtsp_media_factory_new();
     gst_rtsp_media_factory_set_launch(
         factory,
-        "( appsrc name=mysrc ! queue ! videoconvert ! video/x-raw,format=I420 ! "
-        "queue ! x264enc ! rtph264pay name=pay0 pt=96 )");
+        "( appsrc name=mysrc ! videoconvert ! video/x-raw,format=I420 ! "
+        "x264enc speed-preset=ultrafast tune=zerolatency ! rtph264pay "
+        "name=pay0 pt=96 )");
 
-    /* notify when our media is ready, This is called whenever someone asks for
-     * the media and a new pipeline with our appsrc is created */
-    g_signal_connect(factory, "media-configure", (GCallback)media_configure, &imageQueue);
+    /* notify when our media is ready, This is called whenever someone asks
+                     a new pipeline with our appsrc is created */
+    g_signal_connect(factory, "media-configure", (GCallback)media_configure,
+                     &imageQueue);
+    imageQueue.enable();
 
     /* attach the test factory to the /test url */
     gst_rtsp_mount_points_add_factory(mounts, "/test", factory);
@@ -90,7 +104,6 @@ void Executor::workerLoop(int argc, char** argv) {
 
     /* start serving */
     g_print("stream ready at rtsp://127.0.0.1:8554/test\n");
-
     std::cout << "main loop start\n";
     g_main_loop_run(loop);
     g_main_context_pop_thread_default(context);

@@ -64,6 +64,7 @@ int main(int argc, char** argv) {
 
     auto rtspExecutor = std::make_shared<Executor>(argc, argv);
 
+    int frameId = 0;
     while (!glfwWindowShouldClose(w.getHandle())) {
         static double lastFrameTime = glfwGetTime();
         double currentTime = glfwGetTime();
@@ -73,10 +74,12 @@ int main(int argc, char** argv) {
         }
         lastFrameTime = currentTime;
         glfwMakeContextCurrent(w.getHandle());
+        glfwPollEvents();
         program.bind();
         pipeline.bind();
         glViewport(0, 0, w.getWidth(), w.getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        camera.processKeys(w.getKeyStates(), deltaTime);
         glUniformMatrix4fv(0, 1, GL_FALSE,
                            glm::value_ptr(camera.projection(w.getRatio())));
         glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(camera.view()));
@@ -96,7 +99,7 @@ int main(int argc, char** argv) {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
         u_char* image = new u_char[w.getWidth() * w.getHeight() * 3];
         glReadPixels(0, 0, w.getWidth(), w.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, image);
-        rtspExecutor->imageQueue.enqueue(std::make_shared<ImageBuffer>(image, w.getWidth() * w.getHeight() * 3));
+        rtspExecutor->imageQueue.enqueue(std::make_shared<ImageBuffer>(image, w.getWidth() * w.getHeight() * 3, frameId));
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -106,7 +109,7 @@ int main(int argc, char** argv) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(w.getHandle());
-        glfwPollEvents();
+        frameId++;
     }
 
     ImGui_ImplOpenGL3_Shutdown();
