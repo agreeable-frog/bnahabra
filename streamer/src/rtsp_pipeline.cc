@@ -15,7 +15,6 @@ static gboolean read_data(GstElement* appsrc, guint size, gpointer userdata) {
     GstBuffer* buffer;
 
     std::shared_ptr<ImageBuffer> image = queue->dequeue();
-    std::cout << "Reading frame " << image->id << '\n';
 
     buffer = gst_buffer_new_and_alloc(960 * 540 * 3);
     gst_buffer_fill(buffer, 0, image->data, 960 * 540 * 3);
@@ -32,6 +31,34 @@ static gboolean read_data(GstElement* appsrc, guint size, gpointer userdata) {
     }
     gst_buffer_unref(buffer);
     return TRUE;
+}
+
+static void new_state_callback(GstRTSPMedia* self, gint object,
+                               gpointer user_data) {
+    // std::cout << "new_state_callback\n";
+}
+
+static void new_stream_callback(GstRTSPMedia* self, GstRTSPStream* object,
+                                gpointer user_data) {
+    // std::cout << "new_stream_callback\n";
+}
+
+static void prepared_callback(GstRTSPMedia* self, gpointer user_data) {
+    // std::cout << "prepared_callback\n";
+}
+
+static void removed_stream_callback(GstRTSPMedia* self, GstRTSPStream* object,
+                                    gpointer user_data) {
+    // std::cout << "removed_stream_callback\n";
+}
+
+static void target_state_callback(GstRTSPMedia* self, gint object,
+                                  gpointer user_data) {
+    // std::cout << "target_state_callback\n";
+}
+
+static void unprepared_callback(GstRTSPMedia* self, gpointer user_data) {
+    // std::cout << "unprepared_callback\n";
 }
 
 /* called when a new media pipeline is constructed. We can query the
@@ -56,6 +83,14 @@ static void media_configure(GstRTSPMediaFactory* factory, GstRTSPMedia* media,
     g_object_set(G_OBJECT(appsrc), "is-live", TRUE, "stream-type", 0, "format",
                  GST_FORMAT_TIME, "do-timestamp", TRUE, NULL);
     g_signal_connect(appsrc, "need-data", G_CALLBACK(read_data), user_data);
+    g_signal_connect(media, "new-state", G_CALLBACK(new_state_callback), 0);
+    g_signal_connect(media, "new-stream", G_CALLBACK(new_stream_callback), 0);
+    g_signal_connect(media, "prepared", G_CALLBACK(prepared_callback), 0);
+    g_signal_connect(media, "removed-stream",
+                     G_CALLBACK(removed_stream_callback), 0);
+    g_signal_connect(media, "target-state", G_CALLBACK(target_state_callback),
+                     0);
+    g_signal_connect(media, "unprepared", G_CALLBACK(unprepared_callback), 0);
 
     gst_object_unref(appsrc);
     gst_object_unref(element);
