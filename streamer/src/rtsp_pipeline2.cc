@@ -123,6 +123,7 @@ void RtspPipeline::feedLoop(GstElement* appsrc) {
 
             timestamp += GST_BUFFER_DURATION(buffer);
             g_signal_emit_by_name(appsrc, "push-buffer", buffer, &ret);
+            gst_buffer_unref(buffer);
         }
     }
 }

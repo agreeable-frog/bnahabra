@@ -99,8 +99,8 @@ int main(int argc, char** argv) {
                 (void*)pMesh->getIndexOffset(), instanceBuffer.size());
         }
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-        u_char* image = new u_char[w.getWidth() * w.getHeight() * 3];
-        glReadPixels(0, 0, w.getWidth(), w.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, image);
+/*         u_char* image = new u_char[w.getWidth() * w.getHeight() * 3];
+        glReadPixels(0, 0, w.getWidth(), w.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, image); */
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
