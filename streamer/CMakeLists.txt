@@ -13,7 +13,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" CACHE STRING "C++ compile
 
 set(RESOURCES_PATH ${CMAKE_CURRENT_SOURCE_DIR}/res)
 
-add_library(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/rtsp_pipeline.cc)
+add_library(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/rtsp_pipeline2.cc)
 add_library(bnahabra::streamer ALIAS ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(${PROJECT_NAME} PUBLIC PkgConfig::gstreamer PkgConfig::gstreamer-app PkgConfig::gstreamer-rtsp-server)

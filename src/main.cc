@@ -16,7 +16,7 @@
 #include "renderer/camera.hh"
 #include "renderer/mesh.hh"
 #include "renderer/object.hh"
-#include "streamer/rtsp_pipeline.hh"
+#include "streamer/rtsp_pipeline2.hh"
 
 std::map<std::shared_ptr<Mesh>, std::vector<Object>> makeInstanceGroups(
     const std::vector<Object>& objects) {
@@ -28,6 +28,7 @@ std::map<std::shared_ptr<Mesh>, std::vector<Object>> makeInstanceGroups(
 }
 
 int main(int argc, char** argv) {
+    gst_init(&argc, &argv);
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
@@ -62,7 +63,8 @@ int main(int argc, char** argv) {
     ImGui_ImplOpenGL3_Init("#version 330 core");
     ImGui_ImplGlfw_InitForOpenGL(w.getHandle(), true);
 
-    auto rtspExecutor = std::make_shared<Executor>(argc, argv);
+    RtspPipeline rtspPipeline("", "", "", "");
+    rtspPipeline.start();
 
     int frameId = 0;
     while (!glfwWindowShouldClose(w.getHandle())) {
@@ -99,7 +101,6 @@ int main(int argc, char** argv) {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
         u_char* image = new u_char[w.getWidth() * w.getHeight() * 3];
         glReadPixels(0, 0, w.getWidth(), w.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, image);
-        rtspExecutor->imageQueue.enqueue(std::make_shared<ImageBuffer>(image, w.getWidth() * w.getHeight() * 3, frameId));
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -111,6 +112,8 @@ int main(int argc, char** argv) {
         glfwSwapBuffers(w.getHandle());
         frameId++;
     }
+
+    rtspPipeline.stop();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();

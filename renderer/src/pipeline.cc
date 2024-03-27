@@ -18,6 +18,7 @@ void ShaderModule::init(const std::string& path, Type type) {
     _id = glCreateShader((GLenum)_type);
     char* data = new char[src.size() + 1];
     src.copy(data, src.size() + 1);
+    data[src.size()] = '\0';
     glShaderSource(this->_id, 1, (const GLchar**)&(data), 0);
 
     GLint compileStatus = GL_TRUE;
