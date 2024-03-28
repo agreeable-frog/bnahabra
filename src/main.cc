@@ -16,7 +16,7 @@
 #include "renderer/camera.hh"
 #include "renderer/mesh.hh"
 #include "renderer/object.hh"
-#include "streamer/rtsp_pipeline2.hh"
+#include "streamer/rtsp_pipeline.hh"
 
 std::map<std::shared_ptr<Mesh>, std::vector<Object>> makeInstanceGroups(
     const std::vector<Object>& objects) {
