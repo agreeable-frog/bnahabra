@@ -23,9 +23,11 @@ static void enough_data(GstElement* appsrc, RtspPipeline* pipeline) {
 }
 
 static void prepared(GstRTSPMedia* media, RtspPipeline* pipeline) {
+    std::cout << "Prepared new media.\n";
 }
 
 static void unprepared(GstRTSPMedia* media, RtspPipeline* pipeline) {
+    std::cout << "Unprepared media.\n";
     pipeline->setRunning(false);
 }
 
@@ -65,9 +67,10 @@ void RtspPipeline::start() {
     gst_rtsp_media_factory_set_shared(factory, TRUE);
     gst_rtsp_media_factory_set_launch(
         factory,
-        "( appsrc name=mysrc ! queue ! videoconvert ! video/x-raw,format=I420 ! "
-        "x264enc speed-preset=ultrafast tune=zerolatency ! rtph264pay "
-        "name=pay0 pt=96 )");
+        "( appsrc name=mysrc ! queue ! "
+        "videoconvert ! video/x-raw,format=I420 ! "
+        "x264enc speed-preset=ultrafast tune=zerolatency ! "
+        "rtph264pay name=pay0 pt=96 )");
 
     g_signal_connect(factory, "media-configure", (GCallback)media_configure,
                      this);
@@ -106,11 +109,17 @@ void RtspPipeline::feedLoop(GstElement* appsrc) {
     GstClockTime timestamp = 0;
     GstFlowReturn ret;
     GstBuffer* buffer;
+    Image image;
 
     while (_running) {
         if (_needData) {
             buffer = gst_buffer_new_and_alloc(960 * 540 * 3);
-            gst_buffer_memset(buffer, 0, 0xff, 960 * 540 * 3);
+            if (!_swapchain) {
+                gst_buffer_memset(buffer, 0, 0x00, 960 * 540 * 3);
+            } else {
+                image = _swapchain->take();
+                gst_buffer_fill(buffer, 0, image.data.data(), 960 * 540 * 3);
+            }
             GST_BUFFER_PTS(buffer) = timestamp;
             GST_BUFFER_DURATION(buffer) =
                 gst_util_uint64_scale_int(1, GST_SECOND, APPSRC_FRAMERATE);

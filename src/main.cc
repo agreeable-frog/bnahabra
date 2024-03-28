@@ -64,6 +64,8 @@ int main(int argc, char** argv) {
     ImGui_ImplGlfw_InitForOpenGL(w.getHandle(), true);
 
     RtspPipeline rtspPipeline("", "", "", "");
+    std::shared_ptr<Swapchain> swapchain = std::make_shared<Swapchain>();
+    rtspPipeline.setSwapchain(swapchain);
     rtspPipeline.start();
 
     int frameId = 0;
@@ -99,8 +101,12 @@ int main(int argc, char** argv) {
                 (void*)pMesh->getIndexOffset(), instanceBuffer.size());
         }
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-/*         u_char* image = new u_char[w.getWidth() * w.getHeight() * 3];
-        glReadPixels(0, 0, w.getWidth(), w.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, image); */
+        u_char* data = new u_char[w.getWidth() * w.getHeight() * 3];
+        glReadPixels(0, 0, w.getWidth(), w.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, data);
+        Image image;
+        image.data.insert(image.data.end(), &data[0], &data[w.getWidth() * w.getHeight() * 3]);
+        delete data;
+        swapchain->present(image);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
