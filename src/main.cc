@@ -18,13 +18,31 @@
 #include "renderer/object.hh"
 #include "streamer/rtsp_pipeline.hh"
 
-std::map<std::shared_ptr<Mesh>, std::vector<Object>> makeInstanceGroups(
+static std::map<std::shared_ptr<Mesh>, std::vector<Object>> makeInstanceGroups(
     const std::vector<Object>& objects) {
     std::map<std::shared_ptr<Mesh>, std::vector<Object>> instances;
     for (const auto& object : objects) {
         instances[object.getPMesh()].push_back(object);
     }
     return instances;
+}
+
+static Image readFramebufferToImage(size_t width, size_t height, int frameId) {
+    u_char* data = new u_char[width * height * 3];
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
+    Image image;
+    image.data.insert(image.data.end(), &data[0], &data[width * height * 3 - 1]);
+    delete data;
+    for (size_t line = 0; line != height / 2; ++line) {
+        std::swap_ranges(image.data.begin() + 3 * width * line,
+                         image.data.begin() + 3 * width * (line + 1),
+                         image.data.begin() + 3 * width * (height - line - 1));
+    }
+    image.width = width;
+    image.height = height;
+    image.depth = 3 * sizeof(u_char);
+    image.id = frameId;
+    return image;
 }
 
 int main(int argc, char** argv) {
@@ -63,9 +81,8 @@ int main(int argc, char** argv) {
     ImGui_ImplOpenGL3_Init("#version 330 core");
     ImGui_ImplGlfw_InitForOpenGL(w.getHandle(), true);
 
-    RtspPipeline rtspPipeline("", "", "", "");
-    std::shared_ptr<Swapchain> swapchain = std::make_shared<Swapchain>();
-    rtspPipeline.setSwapchain(swapchain);
+    RtspPipeline rtspPipeline("127.0.0.1", "8000", "test", w.getWidth(),
+                              w.getHeight());
     rtspPipeline.start();
 
     int frameId = 0;
@@ -101,13 +118,9 @@ int main(int argc, char** argv) {
                 (void*)pMesh->getIndexOffset(), instanceBuffer.size());
         }
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-        u_char* data = new u_char[w.getWidth() * w.getHeight() * 3];
-        glReadPixels(0, 0, w.getWidth(), w.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, data);
-        Image image;
-        image.data.insert(image.data.end(), &data[0], &data[w.getWidth() * w.getHeight() * 3]);
-        delete data;
-        swapchain->present(image);
-
+        Image image =
+            readFramebufferToImage(w.getWidth(), w.getHeight(), frameId);
+        rtspPipeline.getSwapchain().present(image);
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();

@@ -3,36 +3,39 @@
 #include <gst/rtsp-server/rtsp-server.h>
 #include <gst/app/gstappsrc.h>
 
-#define APPSRC_FRAMERATE 20
+#define APPSRC_FRAMERATE 30
 
 RtspPipeline::RtspPipeline(const std::string& address, const std::string& port,
-                           const std::string& interface,
-                           const std::string& mountPoint)
+                           const std::string& mountPoint, size_t width,
+                           size_t height)
     : _address(address),
       _port(port),
-      _interface(interface),
-      _mountPoint(mountPoint) {
+      _mountPoint(mountPoint),
+      _width(width),
+      _height(height),
+      _depth(3 * sizeof(u_char)),
+      _swapchain(width, height, 3 * sizeof(u_char)) {
 }
 
-static void need_data(GstElement* appsrc, guint size, RtspPipeline* pipeline) {
-    pipeline->setNeedData(true);
+void RtspPipeline::need_data(GstElement* appsrc, guint size,
+                             RtspPipeline* pipeline) {
+    pipeline->_needData = true;
 }
 
-static void enough_data(GstElement* appsrc, RtspPipeline* pipeline) {
-    pipeline->setNeedData(false);
+void RtspPipeline::enough_data(GstElement* appsrc, RtspPipeline* pipeline) {
+    pipeline->_needData = false;
 }
 
-static void prepared(GstRTSPMedia* media, RtspPipeline* pipeline) {
-    std::cout << "Prepared new media.\n";
+void RtspPipeline::prepared(GstRTSPMedia* media, RtspPipeline* pipeline) {
 }
 
-static void unprepared(GstRTSPMedia* media, RtspPipeline* pipeline) {
-    std::cout << "Unprepared media.\n";
-    pipeline->setRunning(false);
+void RtspPipeline::unprepared(GstRTSPMedia* media, RtspPipeline* pipeline) {
+    pipeline->_running = false;
 }
 
-static void media_configure(GstRTSPMediaFactory* factory, GstRTSPMedia* media,
-                            RtspPipeline* pipeline) {
+void RtspPipeline::media_configure(GstRTSPMediaFactory* factory,
+                                   GstRTSPMedia* media,
+                                   RtspPipeline* pipeline) {
     GstElement* element;
     GstElement* appsrc;
     g_signal_connect(media, "unprepared", G_CALLBACK(unprepared), pipeline);
@@ -51,7 +54,7 @@ static void media_configure(GstRTSPMediaFactory* factory, GstRTSPMedia* media,
                  GST_FORMAT_TIME, "do-timestamp", TRUE, NULL);
     g_signal_connect(appsrc, "need-data", G_CALLBACK(need_data), pipeline);
     g_signal_connect(appsrc, "enough-data", G_CALLBACK(enough_data), pipeline);
-    pipeline->setRunning(true);
+    pipeline->_running = true;
     pipeline->startFeedLoop(appsrc);
 }
 
@@ -62,6 +65,8 @@ void RtspPipeline::start() {
     GstRTSPMountPoints* mounts;
     GstRTSPMediaFactory* factory;
     server = gst_rtsp_server_new();
+    gst_rtsp_server_set_address(server, _address.c_str());
+    gst_rtsp_server_set_service(server, _port.c_str());
     mounts = gst_rtsp_server_get_mount_points(server);
     factory = gst_rtsp_media_factory_new();
     gst_rtsp_media_factory_set_shared(factory, TRUE);
@@ -75,10 +80,13 @@ void RtspPipeline::start() {
     g_signal_connect(factory, "media-configure", (GCallback)media_configure,
                      this);
 
-    gst_rtsp_mount_points_add_factory(mounts, "/test", factory);
+    gst_rtsp_mount_points_add_factory(mounts, ("/" + _mountPoint).c_str(),
+                                      factory);
 
     gst_rtsp_server_attach(server, _runContext);
     _runThread = std::thread(&RtspPipeline::runLoop, this);
+    std::cout << "RTSP stream available at " << _address << ":" << _port << "/"
+              << _mountPoint << '\n';
 }
 
 void RtspPipeline::stop() {
@@ -113,13 +121,10 @@ void RtspPipeline::feedLoop(GstElement* appsrc) {
 
     while (_running) {
         if (_needData) {
-            buffer = gst_buffer_new_and_alloc(960 * 540 * 3);
-            if (!_swapchain) {
-                gst_buffer_memset(buffer, 0, 0x00, 960 * 540 * 3);
-            } else {
-                image = _swapchain->take();
-                gst_buffer_fill(buffer, 0, image.data.data(), 960 * 540 * 3);
-            }
+            buffer = gst_buffer_new_and_alloc(_width * _height * _depth /
+                                              sizeof(u_char));
+            image = _swapchain.take();
+            gst_buffer_fill(buffer, 0, image.data.data(), _width * _height * _depth / sizeof(u_char));
             GST_BUFFER_PTS(buffer) = timestamp;
             GST_BUFFER_DURATION(buffer) =
                 gst_util_uint64_scale_int(1, GST_SECOND, APPSRC_FRAMERATE);
