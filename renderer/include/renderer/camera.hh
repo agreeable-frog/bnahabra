@@ -11,7 +11,9 @@ public:
     glm::mat4 projection(float ratio) const;
     glm::mat4 view() const;
     void processKeys(const std::map<int, bool>& keyStates, float delta);
+    void processMouse(const std::map<int, bool>& mouseButtonStates, const std::array<int, 2>& cursorMove, float delta);
     void move(glm::vec3 move);
+    void rotate(float yaw, float pitch, float roll);
 private:
     glm::vec3 _position;
     glm::vec3 _axis;

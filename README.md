@@ -6,7 +6,7 @@ Flying drone simulator
 
 ### Next objectives
 
-1. Camera orientation (grab)
+1. Camera orientation (grab) X
 2. Textured objects
 3. Complex objects
 4. Cool scene

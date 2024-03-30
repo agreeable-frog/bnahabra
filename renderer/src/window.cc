@@ -56,6 +56,8 @@ void Window::init() {
     glfwSwapInterval(0);
     glfwSetErrorCallback(&Window::glfwErrorCallback);
     glfwSetKeyCallback(_handle, &Window::keyCallback);
+    glfwSetMouseButtonCallback(_handle, &Window::mouseButtonCallback);
+    glfwSetCursorPosCallback(_handle, &Window::cursorPosCallback);
 #ifndef NDEBUG
     glDebugMessageCallback(&Window::debugCallback, 0);
     glEnable(GL_DEBUG_OUTPUT);
@@ -80,8 +82,30 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action,
     void* userPtr = glfwGetWindowUserPointer(window);
     Window* pWindow = (Window*)userPtr;
     if (action == GLFW_PRESS) {
-        pWindow->addKeyState(key, true);
+        pWindow->_keyStates[key] = true;
     } else if (action == GLFW_RELEASE) {
-        pWindow->addKeyState(key, false);
+        pWindow->_keyStates[key] = false;
     }
+}
+
+void Window::mouseButtonCallback(GLFWwindow* window, int button, int action,
+                                 int mods) {
+    void* userPtr = glfwGetWindowUserPointer(window);
+    Window* pWindow = (Window*)userPtr;
+    if (action == GLFW_PRESS) {
+        pWindow->_mouseButtonStates[button] = true;
+    } else if (action == GLFW_RELEASE) {
+        pWindow->_mouseButtonStates[button] = false;
+    }
+}
+
+void Window::cursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
+    void* userPtr = glfwGetWindowUserPointer(window);
+    Window* pWindow = (Window*)userPtr;
+    static double lastxpos = xpos;
+    static double lastypos = ypos;
+    pWindow->_cursorMove[0] += lastxpos - xpos;
+    pWindow->_cursorMove[1] += lastypos - ypos;
+    lastxpos = xpos;
+    lastypos = ypos;
 }

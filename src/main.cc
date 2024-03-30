@@ -96,12 +96,14 @@ int main(int argc, char** argv) {
         }
         lastFrameTime = currentTime;
         glfwMakeContextCurrent(w.getHandle());
+        w.resetCursorMove();
         glfwPollEvents();
         program.bind();
         pipeline.bind();
         glViewport(0, 0, w.getWidth(), w.getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         camera.processKeys(w.getKeyStates(), deltaTime);
+        camera.processMouse(w.getMouseButtonStates(), w.getCursorMove(), deltaTime);
         glUniformMatrix4fv(0, 1, GL_FALSE,
                            glm::value_ptr(camera.projection(w.getRatio())));
         glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(camera.view()));
