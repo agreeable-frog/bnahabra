@@ -4,9 +4,13 @@
 
 Flying drone simulator
 
-* OpenGL renderer
-* 3D environment
-* Multiple synchronized views
-* Basic controls of position and views through GUI
-* Configurable RTSP streaming of views
-* Remote control with ?
+### Next objectives
+
+1. Camera orientation (grab)
+2. Textured objects
+3. Complex objects
+4. Cool scene
+5. Multisampling
+6. Multiple cameras
+7. Multiple rtsp streams
+8. Imgui info menu on each stream (ip, name, resolution)

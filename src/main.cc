@@ -31,7 +31,8 @@ static Image readFramebufferToImage(size_t width, size_t height, int frameId) {
     u_char* data = new u_char[width * height * 3];
     glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
     Image image;
-    image.data.insert(image.data.end(), &data[0], &data[width * height * 3 - 1]);
+    image.data.insert(image.data.end(), &data[0],
+                      &data[width * height * 3 - 1]);
     delete data;
     for (size_t line = 0; line != height / 2; ++line) {
         std::swap_ranges(image.data.begin() + 3 * width * line,
@@ -83,7 +84,7 @@ int main(int argc, char** argv) {
 
     RtspPipeline rtspPipeline("127.0.0.1", "8000", "test", w.getWidth(),
                               w.getHeight());
-    rtspPipeline.start();
+    // rtspPipeline.start();
 
     int frameId = 0;
     while (!glfwWindowShouldClose(w.getHandle())) {
@@ -132,7 +133,7 @@ int main(int argc, char** argv) {
         frameId++;
     }
 
-    rtspPipeline.stop();
+    // rtspPipeline.stop();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
