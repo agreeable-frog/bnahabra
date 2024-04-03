@@ -14,7 +14,9 @@ add_subdirectory(streamer)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" CACHE STRING "C++ compiler flags" FORCE)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+set(RESOURCES_PATH ${CMAKE_CURRENT_SOURCE_DIR}/res)
 
 add_executable(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cc)
 target_link_libraries(${PROJECT_NAME} PRIVATE bnahabra::renderer bnahabra::streamer)
+target_compile_definitions(${PROJECT_NAME} PUBLIC RESOURCES_PATH=\"${RESOURCES_PATH}/\")

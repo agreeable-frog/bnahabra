@@ -4,7 +4,11 @@
 #extension GL_ARB_explicit_attrib_location : require
 #extension GL_ARB_separate_shader_objects : require
 
-out vec4 outFragColor;
+layout(location = 0) in vec2 uv;
+
+layout(location = 0) out vec4 outFragColor;
+
+uniform sampler2D objTexture;
 
 void main() {
     outFragColor = vec4(1.0, 0.0, 0.0, 1.0);

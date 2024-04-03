@@ -14,3 +14,11 @@ Flying drone simulator
 6. Multiple cameras
 7. Multiple rtsp streams
 8. Imgui info menu on each stream (ip, name, resolution)
+
+### Opengl
+
+1. Redo pipeline classes
+2. State change manager
+3. Texture atlas / texture array
+4. Frustum culling
+5. Octree

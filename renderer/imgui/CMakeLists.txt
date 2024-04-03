@@ -7,7 +7,6 @@ find_package(glfw3 REQUIRED)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" CACHE STRING "C++ compiler flags" FORCE)
 
 add_library(${PROJECT_NAME} STATIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui.cpp
                                    ${CMAKE_CURRENT_SOURCE_DIR}/imgui_demo.cpp

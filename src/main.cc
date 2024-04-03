@@ -32,7 +32,7 @@ static Image readFramebufferToImage(size_t width, size_t height, int frameId) {
     glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
     Image image;
     image.data.insert(image.data.end(), &data[0],
-                      &data[width * height * 3 - 1]);
+                      &data[width * height * 3]);
     delete data;
     for (size_t line = 0; line != height / 2; ++line) {
         std::swap_ranges(image.data.begin() + 3 * width * line,

@@ -9,9 +9,7 @@ pkg_check_modules(gstreamer-rtsp-server REQUIRED IMPORTED_TARGET gstreamer-rtsp-
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" CACHE STRING "C++ compiler flags" FORCE)
-
-set(RESOURCES_PATH ${CMAKE_CURRENT_SOURCE_DIR}/res)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
 add_library(${PROJECT_NAME} 
             ${CMAKE_CURRENT_SOURCE_DIR}/src/rtsp_pipeline.cc
