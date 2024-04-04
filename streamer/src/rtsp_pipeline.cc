@@ -3,7 +3,7 @@
 #include <gst/rtsp-server/rtsp-server.h>
 #include <gst/app/gstappsrc.h>
 
-#define APPSRC_FRAMERATE 30
+#define APPSRC_FRAMERATE 60
 
 RtspPipeline::RtspPipeline(const std::string& address, const std::string& port,
                            const std::string& mountPoint, size_t width,

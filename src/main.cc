@@ -76,6 +76,11 @@ int main(int argc, char** argv) {
 
     Camera camera(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
                   glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
+    Camera camera2(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
+                  glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, 3 * M_PI / 4);
+    Camera camera3(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f),
+                  glm::vec3(-1.0f, 0.0f, 0.0f), 0.1f, 50.0f, M_PI / 2);
+
     std::vector<Object> scene;
     auto cube1 = Object(cube, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f},
                         {0.5f, 0.5f, 0.5f});
@@ -94,10 +99,18 @@ int main(int argc, char** argv) {
     ImGui_ImplOpenGL3_Init("#version 330 core");
     ImGui_ImplGlfw_InitForOpenGL(w.getHandle(), true);
 
-    RtspPipeline rtspPipeline("127.0.0.1", "8000", "test", w.getWidth(),
+    RtspPipeline rtspPipelineCamera1("127.0.0.0", "8000", "test", w.getWidth(),
                               w.getHeight());
-    // rtspPipeline.start();
+    RtspPipeline rtspPipelineCamera2("127.0.0.0", "8001", "test", w.getWidth(),
+                              w.getHeight());
+    RtspPipeline rtspPipelineCamera3("127.0.0.1", "8000", "test", w.getWidth(),
+                              w.getHeight());
+    rtspPipelineCamera1.start();
+    rtspPipelineCamera2.start();
+    rtspPipelineCamera3.start();
 
+    program.bind();
+    pipeline.bind();
     int frameId = 0;
     while (!glfwWindowShouldClose(w.getHandle())) {
         static double lastFrameTime = glfwGetTime();
@@ -110,17 +123,21 @@ int main(int argc, char** argv) {
         glfwMakeContextCurrent(w.getHandle());
         w.resetCursorMove();
         glfwPollEvents();
-        program.bind();
-        pipeline.bind();
-        glViewport(0, 0, w.getWidth(), w.getHeight());
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // inputs
         camera.processKeys(w.getKeyStates(), deltaTime);
         camera.processMouse(w.getMouseButtonStates(), w.getCursorMove(),
                             deltaTime);
-        glUniformMatrix4fv(0, 1, GL_FALSE,
-                           glm::value_ptr(camera.projection(w.getRatio())));
-        glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(camera.view()));
+        camera2.processKeys(w.getKeyStates(), deltaTime);
+        camera2.processMouse(w.getMouseButtonStates(), w.getCursorMove(),
+                            deltaTime);
+        glViewport(0, 0, w.getWidth(), w.getHeight());
         auto instanceGroups = makeInstanceGroups(scene);
+
+        // Camera3
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUniformMatrix4fv(0, 1, GL_FALSE,
+                           glm::value_ptr(camera3.projection(w.getRatio())));
+        glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(camera3.view()));
         for (auto& instanceGroup : instanceGroups) {
             auto pMesh = instanceGroup.first;
             auto groupObjects = instanceGroup.second;
@@ -138,7 +155,56 @@ int main(int argc, char** argv) {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
         Image image =
             readFramebufferToImage(w.getWidth(), w.getHeight(), frameId);
-        rtspPipeline.getSwapchain().present(image);
+        rtspPipelineCamera3.getSwapchain().present(image);
+
+        // Camera2
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUniformMatrix4fv(0, 1, GL_FALSE,
+                           glm::value_ptr(camera2.projection(w.getRatio())));
+        glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(camera2.view()));
+        for (auto& instanceGroup : instanceGroups) {
+            auto pMesh = instanceGroup.first;
+            auto groupObjects = instanceGroup.second;
+            instanceBuffer.clear();
+            for (const auto& object : groupObjects) {
+                instanceBuffer.push_back(
+                    InstanceVertex{object.model(), object.getAlbedo()});
+            }
+            instanceBuffer.bufferData();
+            glDrawElementsInstanced(
+                GL_TRIANGLES, pMesh->getIndexSize(), GL_UNSIGNED_INT,
+                (void*)(pMesh->getIndexOffset() * sizeof(uint32_t)),
+                instanceBuffer.size());
+        }
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+        image =
+            readFramebufferToImage(w.getWidth(), w.getHeight(), frameId);
+        rtspPipelineCamera2.getSwapchain().present(image);
+
+        // Camera1
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUniformMatrix4fv(0, 1, GL_FALSE,
+                           glm::value_ptr(camera.projection(w.getRatio())));
+        glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(camera.view()));
+        for (auto& instanceGroup : instanceGroups) {
+            auto pMesh = instanceGroup.first;
+            auto groupObjects = instanceGroup.second;
+            instanceBuffer.clear();
+            for (const auto& object : groupObjects) {
+                instanceBuffer.push_back(
+                    InstanceVertex{object.model(), object.getAlbedo()});
+            }
+            instanceBuffer.bufferData();
+            glDrawElementsInstanced(
+                GL_TRIANGLES, pMesh->getIndexSize(), GL_UNSIGNED_INT,
+                (void*)(pMesh->getIndexOffset() * sizeof(uint32_t)),
+                instanceBuffer.size());
+        }
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+        image =
+            readFramebufferToImage(w.getWidth(), w.getHeight(), frameId);
+        rtspPipelineCamera1.getSwapchain().present(image);
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -150,7 +216,9 @@ int main(int argc, char** argv) {
         frameId++;
     }
 
-    // rtspPipeline.stop();
+    rtspPipelineCamera1.stop();
+    rtspPipelineCamera2.stop();
+    rtspPipelineCamera3.stop();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
