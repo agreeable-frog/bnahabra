@@ -21,7 +21,8 @@ add_library(${PROJECT_NAME} STATIC ${CMAKE_CURRENT_SOURCE_DIR}/src/window.cc
                                    ${CMAKE_CURRENT_SOURCE_DIR}/src/mesh.cc
                                    ${CMAKE_CURRENT_SOURCE_DIR}/src/camera.cc
                                    ${CMAKE_CURRENT_SOURCE_DIR}/src/object.cc
-                                   ${CMAKE_CURRENT_SOURCE_DIR}/src/texture2D.cc)
+                                   ${CMAKE_CURRENT_SOURCE_DIR}/src/texture2D.cc
+                                   ${CMAKE_CURRENT_SOURCE_DIR}/src/texture_atlas.cc)
 add_library(bnahabra::renderer ALIAS ${PROJECT_NAME})
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH="${SHADERS_PATH}/")
