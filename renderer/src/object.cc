@@ -11,7 +11,7 @@ BindingDescriptor InstanceVertex::getBindingDescriptor() const {
 
 std::vector<AttributeDescriptor> InstanceVertex::getAttributeDescriptors()
     const {
-    std::vector<AttributeDescriptor> attributeDescriptors(4, AttributeDescriptor());
+    std::vector<AttributeDescriptor> attributeDescriptors(5, AttributeDescriptor());
 
     attributeDescriptors[0].location = 3;
     attributeDescriptors[0].size = 4;
@@ -37,10 +37,15 @@ std::vector<AttributeDescriptor> InstanceVertex::getAttributeDescriptors()
     attributeDescriptors[3].normalized = GL_FALSE;
     attributeDescriptors[3].offset = offsetof(InstanceVertex, model) + 12 * sizeof(GL_FLOAT); // OK
 
+    attributeDescriptors[4].location = 7;
+    attributeDescriptors[4].size = 3;
+    attributeDescriptors[4].type = GL_FLOAT;
+    attributeDescriptors[4].normalized = GL_FALSE;
+    attributeDescriptors[4].offset = offsetof(InstanceVertex, albedo); // OK
     return attributeDescriptors;
 }
 
-InstanceVertex::InstanceVertex(glm::mat4 model) : model(model) {
+InstanceVertex::InstanceVertex(glm::mat4 model, glm::vec3 albedo) : model(model), albedo(albedo) {
 }
 
 InstanceVertex::InstanceVertex() {

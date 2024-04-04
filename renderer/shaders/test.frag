@@ -5,11 +5,13 @@
 #extension GL_ARB_separate_shader_objects : require
 
 layout(location = 0) in vec2 uv;
+layout(location = 1) in vec3 albedo;
 
 layout(location = 0) out vec4 outFragColor;
 
 uniform sampler2D objTexture;
 
+
 void main() {
-    outFragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    outFragColor = vec4(albedo, 1.0);
 }

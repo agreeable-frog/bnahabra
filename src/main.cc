@@ -31,8 +31,7 @@ static Image readFramebufferToImage(size_t width, size_t height, int frameId) {
     u_char* data = new u_char[width * height * 3];
     glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
     Image image;
-    image.data.insert(image.data.end(), &data[0],
-                      &data[width * height * 3]);
+    image.data.insert(image.data.end(), &data[0], &data[width * height * 3]);
     delete data;
     for (size_t line = 0; line != height / 2; ++line) {
         std::swap_ranges(image.data.begin() + 3 * width * line,
@@ -63,7 +62,9 @@ int main(int argc, char** argv) {
     auto meshBuffer = Buffer<MeshVertex>(Target::VERTEX, Usage::STATIC);
     auto instanceBuffer = Buffer<InstanceVertex>(Target::VERTEX, Usage::STREAM);
     auto cube = std::make_shared<CubeMesh>();
+    auto sphere = std::make_shared<SphereMesh>(64, 64);
     cube->registerInBuffer(meshBuffer, indexBuffer);
+    sphere->registerInBuffer(meshBuffer, indexBuffer);
     indexBuffer.bufferData();
     meshBuffer.bufferData();
 
@@ -76,8 +77,19 @@ int main(int argc, char** argv) {
     Camera camera(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
                   glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
     std::vector<Object> scene;
-    scene.push_back(Object(cube, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f},
-                           {1.0f, 1.0f, 1.0f}));
+    auto cube1 = Object(cube, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f},
+                        {0.5f, 0.5f, 0.5f});
+    cube1.setAlbedo({1.0f, 0.0f, 0.0f});
+    auto cube2 = Object(cube, {2.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f},
+                        {0.5f, 0.5f, 0.5f});
+    cube2.setAlbedo({0.0f, 0.0f, 1.0f});
+    auto cube3 = Object(cube, {0.0f, 2.0f, 0.0f}, {0.0f, 0.0f, 0.0f},
+                        {0.5f, 0.5f, 0.5f});
+    cube3.setAlbedo({0.0f, 1.0f, 0.0f});
+    auto sphere1 = Object(sphere, {0.0f, 0.0f, 6.0f}, {0.0f, 0.0f, 0.0f},
+                          {3.0f, 3.0f, 3.0f});
+    sphere1.setAlbedo({0.5f, 0.5f, 0.5f});
+    scene.insert(scene.end(), {cube1, cube2, cube3, sphere1});
 
     ImGui_ImplOpenGL3_Init("#version 330 core");
     ImGui_ImplGlfw_InitForOpenGL(w.getHandle(), true);
@@ -103,7 +115,8 @@ int main(int argc, char** argv) {
         glViewport(0, 0, w.getWidth(), w.getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         camera.processKeys(w.getKeyStates(), deltaTime);
-        camera.processMouse(w.getMouseButtonStates(), w.getCursorMove(), deltaTime);
+        camera.processMouse(w.getMouseButtonStates(), w.getCursorMove(),
+                            deltaTime);
         glUniformMatrix4fv(0, 1, GL_FALSE,
                            glm::value_ptr(camera.projection(w.getRatio())));
         glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(camera.view()));
@@ -113,12 +126,14 @@ int main(int argc, char** argv) {
             auto groupObjects = instanceGroup.second;
             instanceBuffer.clear();
             for (const auto& object : groupObjects) {
-                instanceBuffer.push_back(InstanceVertex{object.model()});
+                instanceBuffer.push_back(
+                    InstanceVertex{object.model(), object.getAlbedo()});
             }
             instanceBuffer.bufferData();
             glDrawElementsInstanced(
                 GL_TRIANGLES, pMesh->getIndexSize(), GL_UNSIGNED_INT,
-                (void*)pMesh->getIndexOffset(), instanceBuffer.size());
+                (void*)(pMesh->getIndexOffset() * sizeof(uint32_t)),
+                instanceBuffer.size());
         }
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
         Image image =

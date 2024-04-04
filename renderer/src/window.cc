@@ -68,9 +68,9 @@ void Window::init() {
 void Window::debugCallback(GLenum source, GLenum type, GLuint id,
                            GLenum severity, GLsizei length,
                            const GLchar* message, const void* userparam) {
-    std::cout << "DEBUG : source " << source << ", type " << type << ", id "
+/*     std::cout << "DEBUG : source " << source << ", type " << type << ", id "
               << id << ", severity " << severity << '\n';
-    std::cout << std::string(message) << '\n';
+    std::cout << std::string(message) << '\n'; */
 }
 
 void Window::glfwErrorCallback(int i, const char* errStr) {

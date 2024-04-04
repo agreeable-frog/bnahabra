@@ -142,6 +142,7 @@ void Pipeline::bind() const {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
+    glClearColor(0.52f, 0.80f, 0.92f, 0.0f);
     glCullFace(GL_BACK);
 }
 
