@@ -17,6 +17,7 @@
 #include "renderer/mesh.hh"
 #include "renderer/object.hh"
 #include "streamer/rtsp_pipeline.hh"
+#include "renderer/texture_atlas.hh"
 
 static std::map<std::shared_ptr<Mesh>, std::vector<Object>> makeInstanceGroups(
     const std::vector<Object>& objects) {
@@ -72,6 +73,10 @@ int main(int argc, char** argv) {
     instanceBuffer.vertexAttrib();
     meshBuffer.vertexAttrib();
     pipeline.unbind();
+
+   std::shared_ptr<TextureAtlas> textureAtlas = std::make_shared<TextureAtlas>(GL_RGB);
+   textureAtlas->addTexture(std::string(RESOURCES_PATH) + "leaves.jpg"); 
+   textureAtlas->build();
 
     Camera camera(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
                   glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
