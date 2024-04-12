@@ -75,13 +75,16 @@ int main(int argc, char** argv) {
     pipeline.unbind();
 
    std::shared_ptr<TextureAtlas> textureAtlas = std::make_shared<TextureAtlas>(GL_RGB);
-   textureAtlas->addTexture(std::string(RESOURCES_PATH) + "leaves.jpg"); 
+   auto texture = textureAtlas->addTexture(std::string(RESOURCES_PATH) + "leaves.jpg");
+   auto texture2 = textureAtlas->addTexture(std::string(RESOURCES_PATH) + "amiya.jpg");
    textureAtlas->build();
 
     Camera camera(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
                   glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
     std::vector<Object> scene;
-    scene.push_back(Object(cube, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f},
+    scene.push_back(Object(cube, texture, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f},
+                           {1.0f, 1.0f, 1.0f}));
+    scene.push_back(Object(cube, texture2, {3.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f},
                            {1.0f, 1.0f, 1.0f}));
 
     ImGui_ImplOpenGL3_Init("#version 330 core");

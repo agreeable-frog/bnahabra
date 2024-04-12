@@ -53,7 +53,7 @@ void Window::init() {
     if (glewInit() != GLEW_OK) {
         throw std::runtime_error("GLEW init failed.");
     }
-    glfwSwapInterval(1);
+    glfwSwapInterval(0); // We will manage the framerate ourselves
     glfwSetErrorCallback(&Window::glfwErrorCallback);
     glfwSetKeyCallback(_handle, &Window::keyCallback);
     glfwSetMouseButtonCallback(_handle, &Window::mouseButtonCallback);

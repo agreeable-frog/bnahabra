@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "stb_image.h"
 
@@ -11,12 +13,27 @@ AtlasTexture::AtlasTexture(const std::vector<u_char>& data, size_t width,
                            size_t height, GLenum format,
                            std::weak_ptr<TextureAtlas> pAtlas,
                            size_t atlasIndex)
-    : _data(data),
-      _width(width),
-      _height(height),
-      _format(format),
+    : Texture(data, width, height, format),
       _pAtlas(pAtlas),
       _atlasIndex(atlasIndex) {
+}
+
+void AtlasTexture::bind() {
+    if (_pAtlas.expired()) {
+        throw std::runtime_error("Atlas of the texture doesn't exist anymore.");
+    }
+    auto tmp = _pAtlas.lock();
+    tmp->bind();
+    glUniform3fv(2, 1,
+                 glm::value_ptr(glm::vec3(
+                     (float)_width / (float)tmp->getWidth(),
+                     (float)_height / (float)tmp->getHeight(), _atlasIndex)));
+}
+void AtlasTexture::unbind() {
+    if (_pAtlas.expired()) {
+        throw std::runtime_error("Atlas of the texture doesn't exist anymore.");
+    }
+    _pAtlas.lock()->unbind();
 }
 
 TextureAtlas::TextureAtlas(GLenum format) : _format(format) {
@@ -80,7 +97,8 @@ std::shared_ptr<AtlasTexture> TextureAtlas::addTexture(
             "Image loaded in atlas has wrong pixel format.");
     }
     std::shared_ptr<AtlasTexture> pTexture = std::make_shared<AtlasTexture>(
-        data, width, height, format, std::weak_ptr<TextureAtlas>(shared_from_this()), _pTextures.size());
+        data, width, height, format,
+        std::weak_ptr<TextureAtlas>(shared_from_this()), _pTextures.size());
     _width = std::max(_width, width);
     _height = std::max(_height, height);
     _pTextures.push_back(pTexture);
@@ -107,9 +125,15 @@ void TextureAtlas::build() {
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, internalFormat, _width, _height,
                    _pTextures.size());
     for (const auto& pTexture : _pTextures) {
-        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, pTexture->getAtlastIndex(),
-                        pTexture->getWidth(), pTexture->getHeight(), 1, _format,
-                        GL_UNSIGNED_BYTE, (void*)pTexture->getData().data());
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0,
+                        pTexture->getAtlastIndex(), pTexture->getWidth(),
+                        pTexture->getHeight(), 1, _format, GL_UNSIGNED_BYTE,
+                        (void*)pTexture->getData().data());
     }
+    glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     _built = true;
 }
