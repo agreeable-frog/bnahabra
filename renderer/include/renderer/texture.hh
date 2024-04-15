@@ -1,6 +1,7 @@
 #pragma once
 #include <GL/glew.h>
 #include <GL/gl.h>
+#include <glm/glm.hpp>
 #include <vector>
 #include <sys/types.h>
 
@@ -21,6 +22,9 @@ public:
     }
     GLenum getFormat() const {
         return _format;
+    }
+    virtual glm::vec4 texAtlasParams() const {
+        return {0.0f, 0.0f, 0.0f, 0.0f};
     }
     virtual void bind() = 0;
     virtual void unbind() = 0;

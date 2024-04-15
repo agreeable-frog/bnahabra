@@ -12,7 +12,7 @@ BindingDescriptor InstanceVertex::getBindingDescriptor() const {
 std::vector<AttributeDescriptor> InstanceVertex::getAttributeDescriptors()
     const {
     std::vector<AttributeDescriptor> attributeDescriptors(
-        4, AttributeDescriptor());
+        5, AttributeDescriptor());
 
     attributeDescriptors[0].location = 3;
     attributeDescriptors[0].size = 4;
@@ -41,10 +41,17 @@ std::vector<AttributeDescriptor> InstanceVertex::getAttributeDescriptors()
     attributeDescriptors[3].offset =
         offsetof(InstanceVertex, model) + 12 * sizeof(GL_FLOAT); // OK
 
+    attributeDescriptors[4].location = 7;
+    attributeDescriptors[4].size = 4;
+    attributeDescriptors[4].type = GL_FLOAT;
+    attributeDescriptors[4].normalized = GL_FALSE;
+    attributeDescriptors[4].offset = offsetof(InstanceVertex, texAtlasParams);
+
     return attributeDescriptors;
 }
 
-InstanceVertex::InstanceVertex(glm::mat4 model) : model(model) {
+InstanceVertex::InstanceVertex(glm::mat4 model, glm::vec4 texAtlasParams)
+    : model(model), texAtlasParams(texAtlasParams) {
 }
 
 InstanceVertex::InstanceVertex() {

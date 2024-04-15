@@ -9,9 +9,10 @@
 struct InstanceVertex : public Vertex {
     BindingDescriptor getBindingDescriptor() const override;
     std::vector<AttributeDescriptor> getAttributeDescriptors() const override;
-    InstanceVertex(glm::mat4 model);
+    InstanceVertex(glm::mat4 model, glm::vec4 texAtlasParams);
     InstanceVertex();
     glm::mat4 model;
+    glm::vec4 texAtlasParams;
 };
 
 class Object {

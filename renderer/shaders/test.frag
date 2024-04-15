@@ -6,7 +6,7 @@
 #extension GL_ARB_explicit_uniform_location : require
 
 layout(location = 0) in vec2 uv;
-layout(location = 1) in vec4 texAtlasCoords;
+layout(location = 1) in vec4 texAtlasParams;
 
 layout(location = 0) out vec4 outFragColor;
 
@@ -15,6 +15,6 @@ layout(location = 0) uniform mat4 proj;
 layout(location = 1) uniform mat4 view;
 
 void main() {
-    outFragColor = texAtlasCoords.x *
-        texture(textureAtlas, vec3(texAtlasCoords.y * uv.x, texAtlasCoords.z * uv.y, texAtlasCoords.w));
+    outFragColor = texAtlasParams.x *
+                   texture(textureAtlas, texAtlasParams.yzw * vec3(uv, 1.0));
 }

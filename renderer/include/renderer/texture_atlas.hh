@@ -22,6 +22,7 @@ public:
     size_t getAtlastIndex() const {
         return _atlasIndex;
     }
+    virtual glm::vec4 texAtlasParams() const override;
     void bind() override;
     void unbind() override;
 

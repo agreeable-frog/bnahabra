@@ -36,6 +36,16 @@ void AtlasTexture::unbind() {
     _pAtlas.lock()->unbind();
 }
 
+glm::vec4 AtlasTexture::texAtlasParams() const {
+    try {
+        auto pAtlas = _pAtlas.lock();
+        return {1.0f, (float)_width / (float)pAtlas->getWidth(),
+                (float)_height / (float)pAtlas->getHeight(), _atlasIndex};
+    } catch (std::exception& e) {
+        return {0.0f, 0.0f, 0.0f, 0.0f};
+    }
+}
+
 TextureAtlas::TextureAtlas(GLenum format) : _format(format) {
     glGenTextures(1, &_id);
     if ((format != GL_R) && (format != GL_RGB) && (format != GL_RGBA))
