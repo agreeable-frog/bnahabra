@@ -7,7 +7,7 @@ Flying drone simulator
 ### Next objectives
 
 1. Camera orientation (grab) X
-2. Textured objects
+2. Textured objects X
 3. Complex objects
 4. Cool scene
 5. Multisampling
@@ -19,6 +19,6 @@ Flying drone simulator
 
 1. Redo pipeline classes
 2. State change manager
-3. Texture atlas / texture array
+3. Texture atlas / texture array X
 4. Frustum culling
 5. Octree

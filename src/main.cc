@@ -63,7 +63,9 @@ int main(int argc, char** argv) {
     auto meshBuffer = Buffer<MeshVertex>(Target::VERTEX, Usage::STATIC);
     auto instanceBuffer = Buffer<InstanceVertex>(Target::VERTEX, Usage::STREAM);
     auto cube = std::make_shared<CubeMesh>();
+    auto sphere = std::make_shared<SphereMesh>(16, 16);
     cube->registerInBuffer(meshBuffer, indexBuffer);
+    sphere->registerInBuffer(meshBuffer, indexBuffer);
     indexBuffer.bufferData();
     meshBuffer.bufferData();
 
@@ -87,6 +89,8 @@ int main(int argc, char** argv) {
     scene.push_back(Object(cube, texture, {0.0f, 0.0f, 0.0f},
                            {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
     scene.push_back(Object(cube, texture2, {3.0f, 0.0f, 0.0f},
+                           {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
+    scene.push_back(Object(sphere, texture2, {3.0f, 4.0f, 0.0f},
                            {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
 
     ImGui_ImplOpenGL3_Init("#version 330 core");
@@ -130,7 +134,7 @@ int main(int argc, char** argv) {
             instanceBuffer.bufferData();
             glDrawElementsInstanced(
                 GL_TRIANGLES, pMesh->getIndexSize(), GL_UNSIGNED_INT,
-                (void*)pMesh->getIndexOffset(), instanceBuffer.size());
+                (void*)(pMesh->getIndexOffset() * sizeof(uint32_t)), instanceBuffer.size());
         }
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
         Image image =

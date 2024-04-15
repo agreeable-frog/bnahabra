@@ -59,9 +59,9 @@ void Window::init() {
     glfwSetMouseButtonCallback(_handle, &Window::mouseButtonCallback);
     glfwSetCursorPosCallback(_handle, &Window::cursorPosCallback);
 #ifndef NDEBUG
-    glDebugMessageCallback(&Window::debugCallback, 0);
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    // glDebugMessageCallback(&Window::debugCallback, 0);
+    // glEnable(GL_DEBUG_OUTPUT);
+    // glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 #endif
 }
 
