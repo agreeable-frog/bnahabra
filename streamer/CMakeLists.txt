@@ -1,6 +1,8 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.7)
 
 project(streamer VERSION 1.0 LANGUAGES CXX)
+
+find_package(Threads REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(gstreamer REQUIRED IMPORTED_TARGET gstreamer-1.0)
@@ -16,4 +18,4 @@ add_library(${PROJECT_NAME}
             ${CMAKE_CURRENT_SOURCE_DIR}/src/swapchain.cc)
 add_library(bnahabra::streamer ALIAS ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(${PROJECT_NAME} PUBLIC PkgConfig::gstreamer PkgConfig::gstreamer-app PkgConfig::gstreamer-rtsp-server)
+target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads PkgConfig::gstreamer PkgConfig::gstreamer-app PkgConfig::gstreamer-rtsp-server)

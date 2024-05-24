@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.7)
 
 project(imgui VERSION 1.0 LANGUAGES CXX)
 
@@ -19,4 +19,4 @@ add_library(Imgui::Imgui ALIAS ${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL glfw)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS} ${OPENGL_LIBRARIES} glfw)

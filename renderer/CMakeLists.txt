@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.7)
 
 project(renderer VERSION 1.0 LANGUAGES CXX)
 
@@ -29,4 +29,4 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH="${SHADERS_PATH}/
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Imgui::Imgui stb::stb glfw OpenGL::GL GLEW::GLEW glm::glm)
+target_link_libraries(${PROJECT_NAME} PUBLIC Imgui::Imgui stb::stb glfw ${CMAKE_DL_LIBS} ${OPENGL_LIBRARIES} GLEW::GLEW glm::glm)
