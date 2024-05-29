@@ -18,6 +18,7 @@
 #include "renderer/object.hh"
 #include "streamer/rtsp_pipeline.hh"
 #include "renderer/texture_atlas.hh"
+#include "renderer/obj_loader.hh"
 
 static std::map<std::shared_ptr<Mesh>, std::vector<Object>> makeInstanceGroups(
     const std::vector<Object>& objects) {
@@ -50,6 +51,8 @@ int main(int argc, char** argv) {
     gst_init(&argc, &argv);
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ObjLoader(std::string(RESOURCES_PATH) + "Lowpoly_tree_sample.obj");
+    ObjLoader(std::string(RESOURCES_PATH) + "Lowpoly_tree_sample.mtl");
 
     auto w = Window("test", 960, 540);
     auto program = Program(
