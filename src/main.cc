@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
 
     RtspPipeline rtspPipeline("127.0.0.1", "8000", "test", w.getWidth(),
                               w.getHeight());
-    // rtspPipeline.start();
+    rtspPipeline.start();
 
     int frameId = 0;
     while (!glfwWindowShouldClose(w.getHandle())) {
@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
         frameId++;
     }
 
-    // rtspPipeline.stop();
+    rtspPipeline.stop();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();

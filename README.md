@@ -6,19 +6,20 @@ Flying drone simulator
 
 ### Next objectives
 
-1. Camera orientation (grab) X
-2. Textured objects X
-3. Complex objects
-4. Cool scene
-5. Multisampling
-6. Multiple cameras
-7. Multiple rtsp streams
-8. Imgui info menu on each stream (ip, name, resolution)
+* OBJ loader
+* Ground + Tree
+* Framebuffer for each camera (instead of printing on the same one everytime)
+* Config file for cameras
+* Imgui info menu for cameras (address, resolution, fov, etc.)
+* Group cameras by drone, one main camera by drone allows to control it
+* Imgui menu to switch between cameras in window
+* Refactoring for modularity
+    * Renderer independent
+    * Streamer independent + generic
 
 ### Opengl
 
 1. Redo pipeline classes
 2. State change manager
-3. Texture atlas / texture array X
 4. Frustum culling
 5. Octree
