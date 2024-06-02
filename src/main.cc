@@ -137,7 +137,8 @@ int main(int argc, char** argv) {
             instanceBuffer.bufferData();
             glDrawElementsInstanced(
                 GL_TRIANGLES, pMesh->getIndexSize(), GL_UNSIGNED_INT,
-                (void*)(pMesh->getIndexOffset() * sizeof(uint32_t)), instanceBuffer.size());
+                (void*)(pMesh->getIndexOffset() * sizeof(uint32_t)),
+                instanceBuffer.size());
         }
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
         Image image =

@@ -28,6 +28,7 @@ public:
     GLenum getFormat() const {
         return _format;
     }
+
 private:
     GLuint _id;
     uint _width;

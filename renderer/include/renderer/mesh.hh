@@ -18,7 +18,8 @@ struct MeshVertex : public Vertex {
 
 class Mesh {
 public:
-    Mesh(const std::vector<MeshVertex>& vertices, const std::vector<uint32_t>& indices);
+    Mesh(const std::vector<MeshVertex>& vertices,
+         const std::vector<uint32_t>& indices);
     size_t getIndexOffset() const {
         return _indexOffset;
     }
@@ -27,6 +28,7 @@ public:
     }
     void registerInBuffer(Buffer<MeshVertex>& vertexBuffer,
                           Buffer<uint32_t>& indexBuffer);
+
 protected:
     Mesh() {
         static int counter = 0;

@@ -124,7 +124,8 @@ void RtspPipeline::feedLoop(GstElement* appsrc) {
             buffer = gst_buffer_new_and_alloc(_width * _height * _depth /
                                               sizeof(u_char));
             image = _swapchain.take();
-            gst_buffer_fill(buffer, 0, image.data.data(), _width * _height * _depth / sizeof(u_char));
+            gst_buffer_fill(buffer, 0, image.data.data(),
+                            _width * _height * _depth / sizeof(u_char));
             GST_BUFFER_PTS(buffer) = timestamp;
             GST_BUFFER_DURATION(buffer) =
                 gst_util_uint64_scale_int(1, GST_SECOND, APPSRC_FRAMERATE);

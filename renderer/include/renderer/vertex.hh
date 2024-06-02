@@ -19,5 +19,6 @@ struct AttributeDescriptor {
 
 struct Vertex {
     virtual BindingDescriptor getBindingDescriptor() const = 0;
-    virtual std::vector<AttributeDescriptor> getAttributeDescriptors() const = 0;
+    virtual std::vector<AttributeDescriptor> getAttributeDescriptors()
+        const = 0;
 };

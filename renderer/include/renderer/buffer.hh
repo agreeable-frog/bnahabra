@@ -67,7 +67,8 @@ public:
                 attributeDescriptor.location, attributeDescriptor.size,
                 attributeDescriptor.type, attributeDescriptor.normalized,
                 bindingDescriptor.stride, (void*)attributeDescriptor.offset);
-            glVertexAttribDivisor(attributeDescriptor.location, bindingDescriptor.divisor);
+            glVertexAttribDivisor(attributeDescriptor.location,
+                                  bindingDescriptor.divisor);
             glEnableVertexAttribArray(attributeDescriptor.location);
         }
         unbind();
@@ -75,7 +76,8 @@ public:
 
     void bufferData() {
         bind();
-        glBufferData((GLenum)_target, this->size() * sizeof(T), this->data(), (GLenum)_usage);
+        glBufferData((GLenum)_target, this->size() * sizeof(T), this->data(),
+                     (GLenum)_usage);
         unbind();
     }
 
