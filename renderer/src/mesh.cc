@@ -41,6 +41,11 @@ MeshVertex::MeshVertex(glm::vec3 pos, glm::vec3 normal, glm::vec2 uv)
 MeshVertex::MeshVertex() {
 }
 
+Mesh::Mesh(const std::vector<MeshVertex>& vertices, const std::vector<uint32_t>& indices) : Mesh() {
+    _vertices = vertices;
+    _indices = indices;
+}
+
 void Mesh::registerInBuffer(Buffer<MeshVertex>& vertexBuffer, Buffer<uint32_t>& indexBuffer) {
     _indexOffset = indexBuffer.size();
     auto vertexBufferSize = vertexBuffer.size();
@@ -182,20 +187,3 @@ PlaneMesh::PlaneMesh(glm::vec3 up, glm::vec3 dir, float ratio) : Mesh() {
     std::vector<uint32_t> index = {0, 1, 2, 0, 2, 3};
     _indices.insert(_indices.end(), index.begin(), index.end());
 }
-
-/* Mesh Mesh::loadFromOBJ(const std::string& path) {
-    Mesh mesh;
-    objl::Loader loader;
-    loader.LoadFile(path);
-    for (const auto& vertex : loader.LoadedMeshes[0].Vertices) {
-        mesh._vertices.push_back(
-            MeshVertex{glm::vec3{vertex.Position.X, vertex.Position.Y, vertex.Position.Z},
-                   glm::vec3{vertex.Normal.X, vertex.Normal.Y, vertex.Normal.Z},
-                   glm::vec2{vertex.TextureCoordinate.X, vertex.TextureCoordinate.Y}});
-    }
-
-    mesh._indices = loader.LoadedMeshes[0].Indices;
-    std::cout << "indices size : " << mesh._indices.size() << '\n';
-
-    return mesh;
-} */
