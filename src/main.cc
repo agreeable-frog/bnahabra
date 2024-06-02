@@ -51,8 +51,6 @@ int main(int argc, char** argv) {
     gst_init(&argc, &argv);
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ObjLoader(std::string(RESOURCES_PATH) + "Lowpoly_tree_sample.obj");
-    ObjLoader(std::string(RESOURCES_PATH) + "Lowpoly_tree_sample.mtl");
 
     auto w = Window("test", 960, 540);
     auto program = Program(
@@ -85,6 +83,7 @@ int main(int argc, char** argv) {
     auto texture2 =
         textureAtlas->addTexture(std::string(RESOURCES_PATH) + "amiya.jpg");
     textureAtlas->build();
+    ObjLoader(std::string(RESOURCES_PATH) + "Lowpoly_tree_sample.obj", textureAtlas);
 
     Camera camera(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
                   glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
