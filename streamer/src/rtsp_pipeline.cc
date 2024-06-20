@@ -47,7 +47,7 @@ void RtspPipeline::media_configure(GstRTSPMediaFactory* factory,
     g_object_set(G_OBJECT(appsrc), "caps",
                  gst_caps_new_simple(
                      "video/x-raw", "format", G_TYPE_STRING, "RGB", "width",
-                     G_TYPE_INT, 960, "height", G_TYPE_INT, 540, "framerate",
+                     G_TYPE_INT, pipeline->getWidth(), "height", G_TYPE_INT, pipeline->getHeight(), "framerate",
                      GST_TYPE_FRACTION, APPSRC_FRAMERATE, 1, NULL),
                  NULL);
     g_object_set(G_OBJECT(appsrc), "is-live", TRUE, "stream-type", 0, "format",

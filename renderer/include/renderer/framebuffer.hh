@@ -10,6 +10,15 @@ public:
     Framebuffer& operator=(const Framebuffer&);
     ~Framebuffer();
     void bind(GLenum bind);
+    GLuint getFbo() const {
+        return _fbo;
+    }
+    size_t getWidth() const {
+        return _width;
+    }
+    size_t getHeight() const {
+        return _height;
+    }
 private:
     size_t _width;
     size_t _height;
@@ -17,4 +26,6 @@ private:
     GLuint _renderBuffer;
     GLuint _depthBuffer;
     GLuint _fbo;
+    void init();
+    void destroy();
 };

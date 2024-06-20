@@ -18,7 +18,7 @@
 #include "renderer/object.hh"
 #include "streamer/rtsp_pipeline.hh"
 #include "renderer/texture_atlas.hh"
-#include "renderer/obj_loader.hh"
+#include "renderer/framebuffer.hh"
 
 static std::map<std::shared_ptr<Mesh>, std::vector<Object>> makeInstanceGroups(
     const std::vector<Object>& objects) {
@@ -53,6 +53,17 @@ int main(int argc, char** argv) {
     ImGui::CreateContext();
 
     auto w = Window("test", 960, 540);
+
+    Camera camera1(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
+                   glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
+    Framebuffer framebuffer1(960, 540, GL_RGBA);
+    Camera camera2(glm::vec3(10.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
+                   glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 4);
+    Framebuffer framebuffer2(400, 400, GL_RGBA);
+    std::vector<Framebuffer> framebuffers = {framebuffer1, framebuffer2};
+    std::vector<Camera> cameras = {camera1, camera2};
+    size_t mainCameraIndex = 0;
+
     auto program = Program(
         std::make_shared<ShaderModule>(std::string(SHADERS_PATH) + "test.vert",
                                        ShaderModule::Type::VERTEX),
@@ -83,10 +94,7 @@ int main(int argc, char** argv) {
     auto texture2 =
         textureAtlas->addTexture(std::string(RESOURCES_PATH) + "amiya.jpg");
     textureAtlas->build();
-    ObjLoader(std::string(RESOURCES_PATH) + "Lowpoly_tree_sample.obj", textureAtlas);
 
-    Camera camera(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
-                  glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
     std::vector<Object> scene;
     scene.push_back(Object(cube, texture, {0.0f, 0.0f, 0.0f},
                            {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
@@ -98,10 +106,22 @@ int main(int argc, char** argv) {
     ImGui_ImplOpenGL3_Init("#version 330 core");
     ImGui_ImplGlfw_InitForOpenGL(w.getHandle(), true);
 
-    RtspPipeline rtspPipeline("127.0.0.1", "8000", "test", w.getWidth(),
-                              w.getHeight());
-    rtspPipeline.start();
+    std::shared_ptr<RtspPipeline> rtspPipeline1 =
+        std::make_shared<RtspPipeline>("127.0.0.1", "8000", "test",
+                                       framebuffer1.getWidth(),
+                                       framebuffer1.getHeight());
+    rtspPipeline1->start();
+    std::shared_ptr<RtspPipeline> rtspPipeline2 =
+        std::make_shared<RtspPipeline>("127.0.0.1", "8001", "test",
+                                       framebuffer2.getWidth(),
+                                       framebuffer2.getHeight());
+    rtspPipeline2->start();
+    std::vector<std::shared_ptr<RtspPipeline>> rtspPipelines = {rtspPipeline1,
+                                                                rtspPipeline2};
 
+    glfwMakeContextCurrent(w.getHandle());
+    program.bind();
+    pipeline.bind();
     int frameId = 0;
     while (!glfwWindowShouldClose(w.getHandle())) {
         static double lastFrameTime = glfwGetTime();
@@ -111,19 +131,22 @@ int main(int argc, char** argv) {
             continue;
         }
         lastFrameTime = currentTime;
-        glfwMakeContextCurrent(w.getHandle());
+
         w.resetCursorMove();
         glfwPollEvents();
-        program.bind();
-        pipeline.bind();
+        cameras[mainCameraIndex].processKeys(w.getKeyStates(), deltaTime);
+        cameras[mainCameraIndex].processMouse(w.getMouseButtonStates(),
+                                              w.getCursorMove(), deltaTime);
+
+        // Draw to window
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glViewport(0, 0, w.getWidth(), w.getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        camera.processKeys(w.getKeyStates(), deltaTime);
-        camera.processMouse(w.getMouseButtonStates(), w.getCursorMove(),
-                            deltaTime);
-        glUniformMatrix4fv(0, 1, GL_FALSE,
-                           glm::value_ptr(camera.projection(w.getRatio())));
-        glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(camera.view()));
+        glUniformMatrix4fv(
+            0, 1, GL_FALSE,
+            glm::value_ptr(cameras[mainCameraIndex].projection(w.getRatio())));
+        glUniformMatrix4fv(1, 1, GL_FALSE,
+                           glm::value_ptr(cameras[mainCameraIndex].view()));
         auto instanceGroups = makeInstanceGroups(scene);
         for (auto& instanceGroup : instanceGroups) {
             auto pMesh = instanceGroup.first;
@@ -139,22 +162,55 @@ int main(int argc, char** argv) {
                 (void*)(pMesh->getIndexOffset() * sizeof(uint32_t)),
                 instanceBuffer.size());
         }
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-        Image image =
-            readFramebufferToImage(w.getWidth(), w.getHeight(), frameId);
-        rtspPipeline.getSwapchain().present(image);
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
 
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        // Draw to framebuffers
+        for (size_t i = 0; i < cameras.size(); i++) {
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffers[i].getFbo());
+            glViewport(0, 0, framebuffers[i].getWidth(),
+                       framebuffers[i].getHeight());
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glUniformMatrix4fv(
+                0, 1, GL_FALSE,
+                glm::value_ptr(cameras[i].projection(w.getRatio())));
+            glUniformMatrix4fv(1, 1, GL_FALSE,
+                               glm::value_ptr(cameras[i].view()));
+            auto instanceGroups = makeInstanceGroups(scene);
+            for (auto& instanceGroup : instanceGroups) {
+                auto pMesh = instanceGroup.first;
+                auto groupObjects = instanceGroup.second;
+                instanceBuffer.clear();
+                for (const auto& object : groupObjects) {
+                    instanceBuffer.push_back(
+                        InstanceVertex{object.model(),
+                                       object.getPTexture()->texAtlasParams()});
+                }
+                instanceBuffer.bufferData();
+                glDrawElementsInstanced(
+                    GL_TRIANGLES, pMesh->getIndexSize(), GL_UNSIGNED_INT,
+                    (void*)(pMesh->getIndexOffset() * sizeof(uint32_t)),
+                    instanceBuffer.size());
+            }
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffers[i].getFbo());
+            Image image =
+                readFramebufferToImage(framebuffers[i].getWidth(),
+                                       framebuffers[i].getHeight(), frameId);
+            rtspPipelines[i]->getSwapchain().present(image);
+        }
+
+        /*         ImGui_ImplOpenGL3_NewFrame();
+                ImGui_ImplGlfw_NewFrame();
+                ImGui::NewFrame();
+
+                ImGui::Render();
+                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); */
 
         glfwSwapBuffers(w.getHandle());
         frameId++;
     }
 
-    rtspPipeline.stop();
+    for (auto rtspPipeline : rtspPipelines) {
+        rtspPipeline->stop();
+    }
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();

@@ -19,6 +19,15 @@ public:
     Swapchain& getSwapchain() {
         return _swapchain;
     }
+    size_t getWidth() const {
+        return _width;
+    }
+    size_t getHeight() const {
+        return _height;
+    }
+    size_t getDepth() const {
+        return _depth;
+    }
 
 private:
     std::string _address;
