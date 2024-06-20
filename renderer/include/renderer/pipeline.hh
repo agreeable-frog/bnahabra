@@ -37,6 +37,8 @@ class Program {
 public:
     Program(std::shared_ptr<const ShaderModule> pVertShader,
             std::shared_ptr<const ShaderModule> pFragShader);
+    Program(const std::string& vertShaderPath,
+            const std::string& fragShaderPath);
     Program(const Program& other);
     Program& operator=(const Program& other);
     ~Program();

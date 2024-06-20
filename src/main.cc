@@ -47,64 +47,95 @@ static Image readFramebufferToImage(size_t width, size_t height, int frameId) {
     return image;
 }
 
+struct Resources {
+    Program program;
+    Pipeline pipeline;
+    Buffer<uint32_t> indexBuffer;
+    Buffer<MeshVertex> meshBuffer;
+    Buffer<InstanceVertex> instanceBuffer;
+    std::shared_ptr<TextureAtlas> textureAtlas;
+    Resources(const std::string& vertShaderPath,
+              const std::string& fragShaderPath)
+        : program(vertShaderPath, fragShaderPath),
+          pipeline(),
+          indexBuffer(Target::INDEX, Usage::STATIC),
+          meshBuffer(Target::VERTEX, Usage::STATIC),
+          instanceBuffer(Target::VERTEX, Usage::STREAM),
+          textureAtlas(std::make_shared<TextureAtlas>(GL_RGB)) {
+    }
+    void build() {
+        indexBuffer.bufferData();
+        meshBuffer.bufferData();
+        pipeline.bind();
+        indexBuffer.bind();
+        instanceBuffer.vertexAttrib();
+        meshBuffer.vertexAttrib();
+        textureAtlas->build();
+    }
+};
+
+struct Scene {
+    std::vector<Object> objects;
+    void draw(Resources& resources, Camera& camera, float ratio) {
+        glUniformMatrix4fv(0, 1, GL_FALSE,
+                           glm::value_ptr(camera.projection(ratio)));
+        glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(camera.view()));
+        auto instanceGroups = makeInstanceGroups(objects);
+        for (auto& instanceGroup : instanceGroups) {
+            auto pMesh = instanceGroup.first;
+            auto groupObjects = instanceGroup.second;
+            resources.instanceBuffer.clear();
+            for (const auto& object : groupObjects) {
+                resources.instanceBuffer.push_back(InstanceVertex{
+                    object.model(), object.getPTexture()->texAtlasParams()});
+            }
+            resources.instanceBuffer.bufferData();
+            glDrawElementsInstanced(
+                GL_TRIANGLES, pMesh->getIndexSize(), GL_UNSIGNED_INT,
+                (void*)(pMesh->getIndexOffset() * sizeof(uint32_t)),
+                resources.instanceBuffer.size());
+        }
+    }
+};
+
 int main(int argc, char** argv) {
     gst_init(&argc, &argv);
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-
     auto w = Window("test", 960, 540);
+    ImGui_ImplOpenGL3_Init("#version 330 core");
+    ImGui_ImplGlfw_InitForOpenGL(w.getHandle(), true);
+
+    Resources resources = Resources(std::string(SHADERS_PATH) + "test.vert",
+                                    std::string(SHADERS_PATH) + "test.frag");
 
     Camera camera1(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
                    glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
     Framebuffer framebuffer1(960, 540, GL_RGBA);
-    Camera camera2(glm::vec3(10.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
-                   glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 4);
+    Camera camera2(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
+                   glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
     Framebuffer framebuffer2(400, 400, GL_RGBA);
     std::vector<Framebuffer> framebuffers = {framebuffer1, framebuffer2};
     std::vector<Camera> cameras = {camera1, camera2};
     size_t mainCameraIndex = 0;
 
-    auto program = Program(
-        std::make_shared<ShaderModule>(std::string(SHADERS_PATH) + "test.vert",
-                                       ShaderModule::Type::VERTEX),
-        std::make_shared<ShaderModule>(std::string(SHADERS_PATH) + "test.frag",
-                                       ShaderModule::Type::FRAGMENT));
-    auto pipeline = Pipeline();
-
-    auto indexBuffer = Buffer<uint32_t>(Target::INDEX, Usage::STATIC);
-    auto meshBuffer = Buffer<MeshVertex>(Target::VERTEX, Usage::STATIC);
-    auto instanceBuffer = Buffer<InstanceVertex>(Target::VERTEX, Usage::STREAM);
     auto cube = std::make_shared<CubeMesh>();
     auto sphere = std::make_shared<SphereMesh>(16, 16);
-    cube->registerInBuffer(meshBuffer, indexBuffer);
-    sphere->registerInBuffer(meshBuffer, indexBuffer);
-    indexBuffer.bufferData();
-    meshBuffer.bufferData();
+    cube->registerInBuffer(resources.meshBuffer, resources.indexBuffer);
+    sphere->registerInBuffer(resources.meshBuffer, resources.indexBuffer);
+    auto texture = resources.textureAtlas->addTexture(
+        std::string(RESOURCES_PATH) + "leaves.jpg");
+    auto texture2 = resources.textureAtlas->addTexture(
+        std::string(RESOURCES_PATH) + "wood2.jpg");
+    resources.build();
 
-    pipeline.bind();
-    indexBuffer.bind();
-    instanceBuffer.vertexAttrib();
-    meshBuffer.vertexAttrib();
-    pipeline.unbind();
-
-    std::shared_ptr<TextureAtlas> textureAtlas =
-        std::make_shared<TextureAtlas>(GL_RGB);
-    auto texture =
-        textureAtlas->addTexture(std::string(RESOURCES_PATH) + "leaves.jpg");
-    auto texture2 =
-        textureAtlas->addTexture(std::string(RESOURCES_PATH) + "amiya.jpg");
-    textureAtlas->build();
-
-    std::vector<Object> scene;
-    scene.push_back(Object(cube, texture, {0.0f, 0.0f, 0.0f},
-                           {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
-    scene.push_back(Object(cube, texture2, {3.0f, 0.0f, 0.0f},
-                           {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
-    scene.push_back(Object(sphere, texture2, {3.0f, 4.0f, 0.0f},
-                           {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
-
-    ImGui_ImplOpenGL3_Init("#version 330 core");
-    ImGui_ImplGlfw_InitForOpenGL(w.getHandle(), true);
+    Scene scene;
+    scene.objects.push_back(Object(cube, texture, {0.0f, 0.0f, 0.0f},
+                                   {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
+    scene.objects.push_back(Object(cube, texture2, {3.0f, 0.0f, 0.0f},
+                                   {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
+    scene.objects.push_back(Object(sphere, texture2, {3.0f, 4.0f, 0.0f},
+                                   {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
 
     std::shared_ptr<RtspPipeline> rtspPipeline1 =
         std::make_shared<RtspPipeline>("127.0.0.1", "8000", "test",
@@ -120,8 +151,8 @@ int main(int argc, char** argv) {
                                                                 rtspPipeline2};
 
     glfwMakeContextCurrent(w.getHandle());
-    program.bind();
-    pipeline.bind();
+    resources.program.bind();
+    resources.pipeline.bind();
     int frameId = 0;
     while (!glfwWindowShouldClose(w.getHandle())) {
         static double lastFrameTime = glfwGetTime();
@@ -142,26 +173,18 @@ int main(int argc, char** argv) {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glViewport(0, 0, w.getWidth(), w.getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glUniformMatrix4fv(
-            0, 1, GL_FALSE,
-            glm::value_ptr(cameras[mainCameraIndex].projection(w.getRatio())));
-        glUniformMatrix4fv(1, 1, GL_FALSE,
-                           glm::value_ptr(cameras[mainCameraIndex].view()));
-        auto instanceGroups = makeInstanceGroups(scene);
-        for (auto& instanceGroup : instanceGroups) {
-            auto pMesh = instanceGroup.first;
-            auto groupObjects = instanceGroup.second;
-            instanceBuffer.clear();
-            for (const auto& object : groupObjects) {
-                instanceBuffer.push_back(InstanceVertex{
-                    object.model(), object.getPTexture()->texAtlasParams()});
-            }
-            instanceBuffer.bufferData();
-            glDrawElementsInstanced(
-                GL_TRIANGLES, pMesh->getIndexSize(), GL_UNSIGNED_INT,
-                (void*)(pMesh->getIndexOffset() * sizeof(uint32_t)),
-                instanceBuffer.size());
-        }
+        scene.draw(resources, cameras[mainCameraIndex], w.getRatio());
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+        ImGui::SetNextWindowSize(ImVec2(200.0f, 200.0f));
+        ImGui::SetNextWindowBgAlpha(0.3f);
+        ImGui::Begin("Debug", 0, ImGuiWindowFlags_NoDecoration);
+        ImGui::Text("test");
+        ImGui::End();
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         // Draw to framebuffers
         for (size_t i = 0; i < cameras.size(); i++) {
@@ -169,40 +192,15 @@ int main(int argc, char** argv) {
             glViewport(0, 0, framebuffers[i].getWidth(),
                        framebuffers[i].getHeight());
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glUniformMatrix4fv(
-                0, 1, GL_FALSE,
-                glm::value_ptr(cameras[i].projection(w.getRatio())));
-            glUniformMatrix4fv(1, 1, GL_FALSE,
-                               glm::value_ptr(cameras[i].view()));
-            auto instanceGroups = makeInstanceGroups(scene);
-            for (auto& instanceGroup : instanceGroups) {
-                auto pMesh = instanceGroup.first;
-                auto groupObjects = instanceGroup.second;
-                instanceBuffer.clear();
-                for (const auto& object : groupObjects) {
-                    instanceBuffer.push_back(
-                        InstanceVertex{object.model(),
-                                       object.getPTexture()->texAtlasParams()});
-                }
-                instanceBuffer.bufferData();
-                glDrawElementsInstanced(
-                    GL_TRIANGLES, pMesh->getIndexSize(), GL_UNSIGNED_INT,
-                    (void*)(pMesh->getIndexOffset() * sizeof(uint32_t)),
-                    instanceBuffer.size());
-            }
+            scene.draw(resources, cameras[i],
+                       framebuffers[i].getWidth() /
+                           (float)framebuffers[i].getHeight());
             glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffers[i].getFbo());
             Image image =
                 readFramebufferToImage(framebuffers[i].getWidth(),
                                        framebuffers[i].getHeight(), frameId);
             rtspPipelines[i]->getSwapchain().present(image);
         }
-
-        /*         ImGui_ImplOpenGL3_NewFrame();
-                ImGui_ImplGlfw_NewFrame();
-                ImGui::NewFrame();
-
-                ImGui::Render();
-                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); */
 
         glfwSwapBuffers(w.getHandle());
         frameId++;

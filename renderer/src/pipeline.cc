@@ -88,6 +88,14 @@ Program::Program(std::shared_ptr<const ShaderModule> pVertShader,
     init(pVertShader, pFragShader);
 }
 
+Program::Program(const std::string& vertShaderPath,
+                 const std::string& fragShaderPath) {
+    init(std::make_shared<ShaderModule>(vertShaderPath,
+                                        ShaderModule::Type::VERTEX),
+         std::make_shared<ShaderModule>(fragShaderPath,
+                                        ShaderModule::Type::FRAGMENT));
+}
+
 Program::Program(const Program& other)
     : Program(other.getPVertShader(), other.getPFragShader()) {
 }
