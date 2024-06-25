@@ -46,6 +46,21 @@ Framebuffer& Framebuffer::operator=(const Framebuffer& framebuffer) {
     return *this;
 }
 
+std::vector<u_char> Framebuffer::read() {
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo);
+    u_char* data = new u_char[_width * _height * 3];
+    glReadPixels(0, 0, _width, _height, GL_RGB, GL_UNSIGNED_BYTE, data);
+    std::vector<u_char> out;
+    out.insert(out.end(), &data[0], &data[_width * _height * 3]);
+    delete data;
+    for (size_t line = 0; line != _height / 2; ++line) {
+        std::swap_ranges(out.begin() + 3 * _width * line,
+                         out.begin() + 3 * _width * (line + 1),
+                         out.begin() + 3 * _width * (_height - line - 1));
+    }
+    return out;
+}
+
 Framebuffer::~Framebuffer() {
     destroy();
 }

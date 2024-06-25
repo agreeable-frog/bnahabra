@@ -2,6 +2,8 @@
 
 #include <GL/glew.h>
 #include <GL/gl.h>
+#include <vector>
+#include <sys/types.h>
 
 class Framebuffer {
 public:
@@ -10,6 +12,7 @@ public:
     Framebuffer& operator=(const Framebuffer&);
     ~Framebuffer();
     void bind(GLenum bind);
+    std::vector<u_char> read();
     GLuint getFbo() const {
         return _fbo;
     }

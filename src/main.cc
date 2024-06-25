@@ -11,114 +11,46 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "renderer/window.hh"
-#include "renderer/pipeline.hh"
-#include "renderer/buffer.hh"
 #include "renderer/camera.hh"
-#include "renderer/mesh.hh"
-#include "renderer/object.hh"
 #include "streamer/rtsp_pipeline.hh"
-#include "renderer/texture_atlas.hh"
 #include "renderer/framebuffer.hh"
-
-static std::map<std::shared_ptr<Mesh>, std::vector<Object>> makeInstanceGroups(
-    const std::vector<Object>& objects) {
-    std::map<std::shared_ptr<Mesh>, std::vector<Object>> instances;
-    for (const auto& object : objects) {
-        instances[object.getPMesh()].push_back(object);
-    }
-    return instances;
-}
-
-static Image readFramebufferToImage(size_t width, size_t height, int frameId) {
-    u_char* data = new u_char[width * height * 3];
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
-    Image image;
-    image.data.insert(image.data.end(), &data[0], &data[width * height * 3]);
-    delete data;
-    for (size_t line = 0; line != height / 2; ++line) {
-        std::swap_ranges(image.data.begin() + 3 * width * line,
-                         image.data.begin() + 3 * width * (line + 1),
-                         image.data.begin() + 3 * width * (height - line - 1));
-    }
-    image.width = width;
-    image.height = height;
-    image.depth = 3 * sizeof(u_char);
-    image.id = frameId;
-    return image;
-}
-
-struct Resources {
-    Program program;
-    Pipeline pipeline;
-    Buffer<uint32_t> indexBuffer;
-    Buffer<MeshVertex> meshBuffer;
-    Buffer<InstanceVertex> instanceBuffer;
-    std::shared_ptr<TextureAtlas> textureAtlas;
-    Resources(const std::string& vertShaderPath,
-              const std::string& fragShaderPath)
-        : program(vertShaderPath, fragShaderPath),
-          pipeline(),
-          indexBuffer(Target::INDEX, Usage::STATIC),
-          meshBuffer(Target::VERTEX, Usage::STATIC),
-          instanceBuffer(Target::VERTEX, Usage::STREAM),
-          textureAtlas(std::make_shared<TextureAtlas>(GL_RGB)) {
-    }
-    void build() {
-        indexBuffer.bufferData();
-        meshBuffer.bufferData();
-        pipeline.bind();
-        indexBuffer.bind();
-        instanceBuffer.vertexAttrib();
-        meshBuffer.vertexAttrib();
-        textureAtlas->build();
-    }
-};
-
-struct Scene {
-    std::vector<Object> objects;
-    void draw(Resources& resources, Camera& camera, float ratio) {
-        glUniformMatrix4fv(0, 1, GL_FALSE,
-                           glm::value_ptr(camera.projection(ratio)));
-        glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(camera.view()));
-        auto instanceGroups = makeInstanceGroups(objects);
-        for (auto& instanceGroup : instanceGroups) {
-            auto pMesh = instanceGroup.first;
-            auto groupObjects = instanceGroup.second;
-            resources.instanceBuffer.clear();
-            for (const auto& object : groupObjects) {
-                resources.instanceBuffer.push_back(InstanceVertex{
-                    object.model(), object.getPTexture()->texAtlasParams()});
-            }
-            resources.instanceBuffer.bufferData();
-            glDrawElementsInstanced(
-                GL_TRIANGLES, pMesh->getIndexSize(), GL_UNSIGNED_INT,
-                (void*)(pMesh->getIndexOffset() * sizeof(uint32_t)),
-                resources.instanceBuffer.size());
-        }
-    }
-};
+#include "engine.hh"
 
 int main(int argc, char** argv) {
+    // Init
     gst_init(&argc, &argv);
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     auto w = Window("test", 960, 540);
     ImGui_ImplOpenGL3_Init("#version 330 core");
     ImGui_ImplGlfw_InitForOpenGL(w.getHandle(), true);
-
     Resources resources = Resources(std::string(SHADERS_PATH) + "test.vert",
                                     std::string(SHADERS_PATH) + "test.frag");
 
+    // Define drones
     Camera camera1(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
                    glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
     Framebuffer framebuffer1(960, 540, GL_RGBA);
+    std::shared_ptr<RtspPipeline> rtspPipeline1 =
+        std::make_shared<RtspPipeline>("127.0.0.1", "8000", "test",
+                                       framebuffer1.getWidth(),
+                                       framebuffer1.getHeight());
+    rtspPipeline1->start();
     Camera camera2(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
                    glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
     Framebuffer framebuffer2(400, 400, GL_RGBA);
+    std::shared_ptr<RtspPipeline> rtspPipeline2 =
+        std::make_shared<RtspPipeline>("127.0.0.1", "8000", "test1",
+                                       framebuffer2.getWidth(),
+                                       framebuffer2.getHeight());
+    rtspPipeline2->start();
     std::vector<Framebuffer> framebuffers = {framebuffer1, framebuffer2};
     std::vector<Camera> cameras = {camera1, camera2};
+    std::vector<std::shared_ptr<RtspPipeline>> rtspPipelines = {rtspPipeline1,
+                                                                rtspPipeline2};
     size_t mainCameraIndex = 0;
 
+    // Setup resources
     auto cube = std::make_shared<CubeMesh>();
     auto sphere = std::make_shared<SphereMesh>(16, 16);
     cube->registerInBuffer(resources.meshBuffer, resources.indexBuffer);
@@ -129,32 +61,25 @@ int main(int argc, char** argv) {
         std::string(RESOURCES_PATH) + "wood2.jpg");
     resources.build();
 
+    // Build scene
     Scene scene;
-    scene.objects.push_back(Object(cube, texture, {0.0f, 0.0f, 0.0f},
-                                   {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
-    scene.objects.push_back(Object(cube, texture2, {3.0f, 0.0f, 0.0f},
-                                   {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
-    scene.objects.push_back(Object(sphere, texture2, {3.0f, 4.0f, 0.0f},
-                                   {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
+    scene.objects.push_back(std::make_shared<Object>(
+        cube, texture, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 0.0f, 0.0f},
+        glm::vec3{1.0f, 1.0f, 1.0f}));
+    scene.objects.push_back(std::make_shared<Object>(
+        cube, texture2, glm::vec3{3.0f, 0.0f, 0.0f},
+        glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}));
+    scene.objects.push_back(std::make_shared<Object>(
+        sphere, texture2, glm::vec3{3.0f, 4.0f, 0.0f},
+        glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}));
 
-    std::shared_ptr<RtspPipeline> rtspPipeline1 =
-        std::make_shared<RtspPipeline>("127.0.0.1", "8000", "test",
-                                       framebuffer1.getWidth(),
-                                       framebuffer1.getHeight());
-    rtspPipeline1->start();
-    std::shared_ptr<RtspPipeline> rtspPipeline2 =
-        std::make_shared<RtspPipeline>("127.0.0.1", "8001", "test",
-                                       framebuffer2.getWidth(),
-                                       framebuffer2.getHeight());
-    rtspPipeline2->start();
-    std::vector<std::shared_ptr<RtspPipeline>> rtspPipelines = {rtspPipeline1,
-                                                                rtspPipeline2};
-
+    // Render loop
     glfwMakeContextCurrent(w.getHandle());
     resources.program.bind();
     resources.pipeline.bind();
     int frameId = 0;
     while (!glfwWindowShouldClose(w.getHandle())) {
+        // Framerate limiter
         static double lastFrameTime = glfwGetTime();
         double currentTime = glfwGetTime();
         double deltaTime = currentTime - lastFrameTime;
@@ -163,11 +88,13 @@ int main(int argc, char** argv) {
         }
         lastFrameTime = currentTime;
 
+        // Update scene
         w.resetCursorMove();
         glfwPollEvents();
         cameras[mainCameraIndex].processKeys(w.getKeyStates(), deltaTime);
         cameras[mainCameraIndex].processMouse(w.getMouseButtonStates(),
                                               w.getCursorMove(), deltaTime);
+        scene.buildInstanceGroups();
 
         // Draw to window
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -195,10 +122,22 @@ int main(int argc, char** argv) {
             scene.draw(resources, cameras[i],
                        framebuffers[i].getWidth() /
                            (float)framebuffers[i].getHeight());
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+            ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+            ImGui::SetNextWindowSize(ImVec2(200.0f, 200.0f));
+            ImGui::SetNextWindowBgAlpha(0.3f);
+            ImGui::Begin("Debug", 0, ImGuiWindowFlags_NoDecoration);
+            ImGui::Text("Camera %li", i);
+            ImGui::End();
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
             glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffers[i].getFbo());
+            auto data = framebuffers[i].read();
             Image image =
-                readFramebufferToImage(framebuffers[i].getWidth(),
-                                       framebuffers[i].getHeight(), frameId);
+                Image{data, framebuffers[i].getWidth(),
+                      framebuffers[i].getHeight(), 3 * sizeof(u_char), frameId};
             rtspPipelines[i]->getSwapchain().present(image);
         }
 
