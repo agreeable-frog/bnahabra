@@ -42,7 +42,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/in
 if(TARGET glm::glm)
 set(${GLM_LIB} glm::glm)
 else()
-message( STATUS "Did not find imported target for glm")
+message(STATUS "Did not find imported target for glm")
 set(${GLM_LIB} glm)
 endif()
 

@@ -15,6 +15,7 @@
 #include "streamer/rtsp_pipeline.hh"
 #include "renderer/framebuffer.hh"
 #include "engine.hh"
+#include "drones.hh"
 
 int main(int argc, char** argv) {
     // Init
@@ -40,7 +41,7 @@ int main(int argc, char** argv) {
                    glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
     Framebuffer framebuffer2(400, 400, GL_RGBA);
     std::shared_ptr<RtspPipeline> rtspPipeline2 =
-        std::make_shared<RtspPipeline>("127.0.0.1", "8000", "test1",
+        std::make_shared<RtspPipeline>("127.0.0.1", "8001", "test",
                                        framebuffer2.getWidth(),
                                        framebuffer2.getHeight());
     rtspPipeline2->start();
