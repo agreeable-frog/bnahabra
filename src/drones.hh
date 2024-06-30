@@ -7,23 +7,31 @@
 
 #include "streamer/rtsp_pipeline.hh"
 #include "renderer/framebuffer.hh"
-#include "renderer/camera.hh"
+
+namespace world {
+    const glm::vec3 X = {1.0f, 0.0f, 0.0f};
+    const glm::vec3 Y = {0.0f, 1.0f, 0.0f};
+    const glm::vec3 Z = {0.0f, 0.0f, 1.0f};
+}
 
 namespace drones {
 struct Camera {
-    std::string streamMountPoint;
+    glm::vec3 position;
+    glm::vec3 rotation;
+
+
     Framebuffer framebuffer;
-    glm::vec3 positionOnDrone;
-    glm::vec3 rotationOnDrone;
-    renderer::Camera renderCamera;
+    std::string streamMountPoint;
 };
 
 struct Drone {
     glm::vec3 position;
-    glm::vec3 up;
-    const glm::vec3 axis = glm::vec3{0.0f, 0.0f, 1.0f};
-    glm::vec3 forward;
+    void move(glm::vec3 move, glm::vec3 speed);
+    glm::vec3 rotation;
+    void rotate(glm::vec3 rotation);
     std::vector<Camera> cameras;
+
+
     std::string ip;
     std::string port;
     std::shared_ptr<RtspPipeline> streamer;

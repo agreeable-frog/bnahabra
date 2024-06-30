@@ -29,16 +29,16 @@ int main(int argc, char** argv) {
                                     std::string(SHADERS_PATH) + "test.frag");
 
     // Define drones
-    renderer::Camera camera1(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
-                   glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
+    renderer::Camera camera1(glm::vec3(-5.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f),
+                   glm::vec3(1.0f, 0.0f, 0.0f), 0.1f, 50.0f, M_PI / 2);
     Framebuffer framebuffer1(960, 540, GL_RGBA);
     std::shared_ptr<RtspPipeline> rtspPipeline1 =
         std::make_shared<RtspPipeline>("127.0.0.1", "8000", "test",
                                        framebuffer1.getWidth(),
                                        framebuffer1.getHeight());
     rtspPipeline1->start();
-    renderer::Camera camera2(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
-                   glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
+    renderer::Camera camera2(glm::vec3(-5.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f),
+                   glm::vec3(1.0f, 0.0f, 0.0f), 0.1f, 50.0f, M_PI / 2);
     Framebuffer framebuffer2(400, 400, GL_RGBA);
     std::shared_ptr<RtspPipeline> rtspPipeline2 =
         std::make_shared<RtspPipeline>("127.0.0.1", "8001", "test",
