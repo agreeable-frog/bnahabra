@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <map>
 
+namespace renderer {
 class Camera {
 public:
     Camera(glm::vec3 position, glm::vec3 axis, glm::vec3 forward,
@@ -26,3 +27,4 @@ private:
     float _farClip;
     float _horizontalFov;
 };
+} // namespace renderer

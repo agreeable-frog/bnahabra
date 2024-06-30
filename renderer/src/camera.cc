@@ -3,6 +3,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
+namespace renderer {
+
 Camera::Camera(glm::vec3 position, glm::vec3 axis, glm::vec3 forward,
                float nearClip, float farClip, float horizontalFov)
     : _position(position),
@@ -77,3 +79,4 @@ void Camera::rotate(float yaw, float pitch, float roll) {
     glm::mat4 rollRot = glm::rotate(glm::mat4(1.0f), roll, _forward);
     _up = rollRot * glm::vec4(_up, 1.0f);
 }
+} // namespace renderer

@@ -42,7 +42,7 @@ struct Scene {
             instanceGroups[object->getPMesh()].push_back(object);
         }
     }
-    void draw(Resources& resources, Camera& camera, float ratio) {
+    void draw(Resources& resources, renderer::Camera& camera, float ratio) {
         glUniformMatrix4fv(0, 1, GL_FALSE,
                            glm::value_ptr(camera.projection(ratio)));
         glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(camera.view()));

@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
                                     std::string(SHADERS_PATH) + "test.frag");
 
     // Define drones
-    Camera camera1(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
+    renderer::Camera camera1(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
                    glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
     Framebuffer framebuffer1(960, 540, GL_RGBA);
     std::shared_ptr<RtspPipeline> rtspPipeline1 =
@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
                                        framebuffer1.getWidth(),
                                        framebuffer1.getHeight());
     rtspPipeline1->start();
-    Camera camera2(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
+    renderer::Camera camera2(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f),
                    glm::vec3(0.0f, 0.0f, 1.0f), 0.1f, 50.0f, M_PI / 2);
     Framebuffer framebuffer2(400, 400, GL_RGBA);
     std::shared_ptr<RtspPipeline> rtspPipeline2 =
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
                                        framebuffer2.getHeight());
     rtspPipeline2->start();
     std::vector<Framebuffer> framebuffers = {framebuffer1, framebuffer2};
-    std::vector<Camera> cameras = {camera1, camera2};
+    std::vector<renderer::Camera> cameras = {camera1, camera2};
     std::vector<std::shared_ptr<RtspPipeline>> rtspPipelines = {rtspPipeline1,
                                                                 rtspPipeline2};
     size_t mainCameraIndex = 0;

@@ -7,13 +7,15 @@
 
 #include "streamer/rtsp_pipeline.hh"
 #include "renderer/framebuffer.hh"
+#include "renderer/camera.hh"
 
 namespace drones {
 struct Camera {
-    std::string streamMount;
+    std::string streamMountPoint;
     Framebuffer framebuffer;
     glm::vec3 positionOnDrone;
     glm::vec3 rotationOnDrone;
+    renderer::Camera renderCamera;
 };
 
 struct Drone {
@@ -27,7 +29,7 @@ struct Drone {
     std::shared_ptr<RtspPipeline> streamer;
     void build() { // temporary while RtspPipeline is mono-mount
         streamer = std::make_shared<RtspPipeline>(
-            ip, port, cameras[0].streamMount, cameras[0].framebuffer.getWidth(),
+            ip, port, cameras[0].streamMountPoint, cameras[0].framebuffer.getWidth(),
             cameras[0].framebuffer.getHeight());
     }
 };
