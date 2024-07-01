@@ -29,26 +29,21 @@ int main(int argc, char** argv) {
                                     std::string(SHADERS_PATH) + "test.frag");
 
     // Define drones
-    renderer::Camera camera1(glm::vec3(-5.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f),
-                   glm::vec3(1.0f, 0.0f, 0.0f), 0.1f, 50.0f, M_PI / 2);
-    Framebuffer framebuffer1(960, 540, GL_RGBA);
+    drones::Swarm swarm;
+    drones::Drone drone;
+    drone.position = glm::vec3{-5.0f, 0.0f, 0.0f};
+    drone.rotation = glm::vec3{0.0f, 0.0f, 0.0f};
+    drones::Camera camera1{glm::vec3{0.0f, 0.0f, 0.0f},
+                           glm::vec3{0.0f, 0.0f, 0.0f},
+                           {960, 540, GL_RGBA}};
+    drone.cameras.push_back(camera1);
+    swarm.drones.push_back(drone);
     std::shared_ptr<RtspPipeline> rtspPipeline1 =
         std::make_shared<RtspPipeline>("127.0.0.1", "8000", "test",
-                                       framebuffer1.getWidth(),
-                                       framebuffer1.getHeight());
+                                       camera1.framebuffer.getWidth(),
+                                       camera1.framebuffer.getHeight());
     rtspPipeline1->start();
-    renderer::Camera camera2(glm::vec3(-5.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f),
-                   glm::vec3(1.0f, 0.0f, 0.0f), 0.1f, 50.0f, M_PI / 2);
-    Framebuffer framebuffer2(400, 400, GL_RGBA);
-    std::shared_ptr<RtspPipeline> rtspPipeline2 =
-        std::make_shared<RtspPipeline>("127.0.0.1", "8001", "test",
-                                       framebuffer2.getWidth(),
-                                       framebuffer2.getHeight());
-    rtspPipeline2->start();
-    std::vector<Framebuffer> framebuffers = {framebuffer1, framebuffer2};
-    std::vector<renderer::Camera> cameras = {camera1, camera2};
-    std::vector<std::shared_ptr<RtspPipeline>> rtspPipelines = {rtspPipeline1,
-                                                                rtspPipeline2};
+    std::vector<std::shared_ptr<RtspPipeline>> rtspPipelines = {rtspPipeline1};
     size_t mainCameraIndex = 0;
 
     // Setup resources
@@ -92,16 +87,52 @@ int main(int argc, char** argv) {
         // Update scene
         w.resetCursorMove();
         glfwPollEvents();
-        cameras[mainCameraIndex].processKeys(w.getKeyStates(), deltaTime);
-        cameras[mainCameraIndex].processMouse(w.getMouseButtonStates(),
-                                              w.getCursorMove(), deltaTime);
+        // cameras[mainCameraIndex].processKeys(w.getKeyStates(), deltaTime);
+        // cameras[mainCameraIndex].processMouse(w.getMouseButtonStates(),
+        //                                       w.getCursorMove(), deltaTime);
         scene.buildInstanceGroups();
 
         // Draw to window
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glViewport(0, 0, w.getWidth(), w.getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        scene.draw(resources, cameras[mainCameraIndex], w.getRatio());
+
+        glm::mat4 droneYawRot =
+            glm::rotate(glm::mat4{1.0f}, drone.rotation.x, world::X);
+        glm::mat4 dronePitchRot =
+            glm::rotate(glm::mat4{1.0f}, drone.rotation.y, world::Y);
+        glm::mat4 droneRollRot =
+            glm::rotate(glm::mat4{1.0f}, drone.rotation.z, world::Z);
+        glm::mat4 droneRot = droneYawRot * dronePitchRot * droneRollRot;
+
+        glm::mat4 cameraYawRot =
+            glm::rotate(droneRot, drone.cameras[0].rotation.x,
+                        glm::vec3{droneRot * glm::vec4{world::X, 1.0f}});
+        glm::mat4 cameraPitchRot =
+            glm::rotate(droneRot, drone.cameras[0].rotation.y,
+                        glm::vec3{droneRot * glm::vec4{world::Y, 1.0f}});
+        glm::mat4 cameraRollRot =
+            glm::rotate(droneRot, drone.cameras[0].rotation.z,
+                        glm::vec3{droneRot * glm::vec4{world::Z, 1.0f}});
+        glm::mat4 cameraRot = cameraYawRot * cameraPitchRot * cameraRollRot;
+
+        glm::mat4 cameraYawRotOnDrone =
+            glm::rotate(glm::mat4{1.0f}, drone.cameras[0].rotation.x, world::X);
+        glm::mat4 cameraPitchRotOnDrone =
+            glm::rotate(glm::mat4{1.0f}, drone.cameras[0].rotation.y, world::Y);
+        glm::mat4 cameraRollRotOnDrone =
+            glm::rotate(glm::mat4{1.0f}, drone.cameras[0].rotation.z, world::Z);
+        glm::mat4 cameraRotOnDrone =
+            cameraYawRotOnDrone * cameraPitchRotOnDrone * cameraRollRotOnDrone;
+
+        renderer::Camera renderCamera(
+            drone.position +
+                glm::vec3{cameraRotOnDrone *
+                          glm::vec4{drone.cameras[0].position, 1.0f}},
+            glm::vec3{cameraRot * glm::vec4{world::Z, 1.0f}},
+            glm::vec3{cameraRot * glm::vec4{world::X, 1.0f}}, 0.1f, 50.0f,
+            M_PI / 2);
+        scene.draw(resources, renderCamera, w.getRatio());
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -115,32 +146,31 @@ int main(int argc, char** argv) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         // Draw to framebuffers
-        for (size_t i = 0; i < cameras.size(); i++) {
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffers[i].getFbo());
-            glViewport(0, 0, framebuffers[i].getWidth(),
-                       framebuffers[i].getHeight());
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            scene.draw(resources, cameras[i],
-                       framebuffers[i].getWidth() /
-                           (float)framebuffers[i].getHeight());
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-            ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
-            ImGui::SetNextWindowSize(ImVec2(200.0f, 200.0f));
-            ImGui::SetNextWindowBgAlpha(0.3f);
-            ImGui::Begin("Debug", 0, ImGuiWindowFlags_NoDecoration);
-            ImGui::Text("Camera %li", i);
-            ImGui::End();
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffers[i].getFbo());
-            auto data = framebuffers[i].read();
-            Image image =
-                Image{data, framebuffers[i].getWidth(),
-                      framebuffers[i].getHeight(), 3 * sizeof(u_char), frameId};
-            rtspPipelines[i]->getSwapchain().present(image);
-        }
+        /*         for (size_t i = 0; i < cameras.size(); i++) {
+                    glBindFramebuffer(GL_DRAW_FRAMEBUFFER,
+           framebuffers[i].getFbo()); glViewport(0, 0,
+           framebuffers[i].getWidth(), framebuffers[i].getHeight());
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                    scene.draw(resources, cameras[i],
+                               framebuffers[i].getWidth() /
+                                   (float)framebuffers[i].getHeight());
+                    ImGui_ImplOpenGL3_NewFrame();
+                    ImGui_ImplGlfw_NewFrame();
+                    ImGui::NewFrame();
+                    ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+                    ImGui::SetNextWindowSize(ImVec2(200.0f, 200.0f));
+                    ImGui::SetNextWindowBgAlpha(0.3f);
+                    ImGui::Begin("Debug", 0, ImGuiWindowFlags_NoDecoration);
+                    ImGui::Text("Camera %li", i);
+                    ImGui::End();
+                    ImGui::Render();
+                    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+                    glBindFramebuffer(GL_READ_FRAMEBUFFER,
+           framebuffers[i].getFbo()); auto data = framebuffers[i].read(); Image
+           image = Image{data, framebuffers[i].getWidth(),
+                              framebuffers[i].getHeight(), 3 * sizeof(u_char),
+           frameId}; rtspPipelines[i]->getSwapchain().present(image);
+                } */
 
         glfwSwapBuffers(w.getHandle());
         frameId++;
