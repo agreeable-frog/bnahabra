@@ -98,30 +98,30 @@ int main(int argc, char** argv) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glm::mat4 droneYawRot =
-            glm::rotate(glm::mat4{1.0f}, drone.rotation.x, world::X);
+            glm::rotate(glm::mat4{1.0f}, drone.rotation.x, world::Z);
         glm::mat4 dronePitchRot =
             glm::rotate(glm::mat4{1.0f}, drone.rotation.y, world::Y);
         glm::mat4 droneRollRot =
-            glm::rotate(glm::mat4{1.0f}, drone.rotation.z, world::Z);
+            glm::rotate(glm::mat4{1.0f}, drone.rotation.z, world::X);
         glm::mat4 droneRot = droneYawRot * dronePitchRot * droneRollRot;
 
         glm::mat4 cameraYawRot =
             glm::rotate(droneRot, drone.cameras[0].rotation.x,
-                        glm::vec3{droneRot * glm::vec4{world::X, 1.0f}});
+                        glm::vec3{droneRot * glm::vec4{world::Z, 1.0f}});
         glm::mat4 cameraPitchRot =
             glm::rotate(droneRot, drone.cameras[0].rotation.y,
                         glm::vec3{droneRot * glm::vec4{world::Y, 1.0f}});
         glm::mat4 cameraRollRot =
             glm::rotate(droneRot, drone.cameras[0].rotation.z,
-                        glm::vec3{droneRot * glm::vec4{world::Z, 1.0f}});
+                        glm::vec3{droneRot * glm::vec4{world::X, 1.0f}});
         glm::mat4 cameraRot = cameraYawRot * cameraPitchRot * cameraRollRot;
 
         glm::mat4 cameraYawRotOnDrone =
-            glm::rotate(glm::mat4{1.0f}, drone.cameras[0].rotation.x, world::X);
+            glm::rotate(glm::mat4{1.0f}, drone.cameras[0].rotation.x, world::Z);
         glm::mat4 cameraPitchRotOnDrone =
             glm::rotate(glm::mat4{1.0f}, drone.cameras[0].rotation.y, world::Y);
         glm::mat4 cameraRollRotOnDrone =
-            glm::rotate(glm::mat4{1.0f}, drone.cameras[0].rotation.z, world::Z);
+            glm::rotate(glm::mat4{1.0f}, drone.cameras[0].rotation.z, world::X);
         glm::mat4 cameraRotOnDrone =
             cameraYawRotOnDrone * cameraPitchRotOnDrone * cameraRollRotOnDrone;
 
