@@ -3,6 +3,7 @@
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/gtx/euler_angles.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <map>
 #include <sys/types.h>
@@ -31,8 +32,8 @@ int main(int argc, char** argv) {
     // Define drones
     drones::Swarm swarm;
     drones::Drone drone;
-    drone.position = glm::vec3{-5.0f, 0.0f, 0.0f};
-    drone.rotation = glm::vec3{0.0f, 0.0f, 0.0f};
+    drone.position = glm::vec3{0.0f, 0.0f, 0.0f};
+    drone.rotation = glm::mat4(1.0f);
     drones::Camera camera1{glm::vec3{0.0f, 0.0f, 0.0f},
                            glm::vec3{0.0f, 0.0f, 0.0f},
                            {960, 540, GL_RGBA}};
@@ -77,19 +78,80 @@ int main(int argc, char** argv) {
     while (!glfwWindowShouldClose(w.getHandle())) {
         // Framerate limiter
         static double lastFrameTime = glfwGetTime();
+        static double lastCoutTime = lastFrameTime;
+        static int lastCoutFrameId = 0;
+        static float actualFps = 0.0f;
         double currentTime = glfwGetTime();
         double deltaTime = currentTime - lastFrameTime;
         if (deltaTime < (1.0 / 60.0)) {
             continue;
+        }
+        if (currentTime - lastCoutTime > 0.5f) {
+            actualFps = float(frameId - lastCoutFrameId) * 2.0f;
+            lastCoutFrameId = frameId;
+            lastCoutTime = currentTime;
         }
         lastFrameTime = currentTime;
 
         // Update scene
         w.resetCursorMove();
         glfwPollEvents();
-        // cameras[mainCameraIndex].processKeys(w.getKeyStates(), deltaTime);
-        // cameras[mainCameraIndex].processMouse(w.getMouseButtonStates(),
-        //                                       w.getCursorMove(), deltaTime);
+        auto& keyStates = w.getKeyStates();
+        float speed = 0.5f;
+        float delta = (float)deltaTime;
+        glm::vec3 forward = glm::vec4(world::X, 1.0f) * drone.rotation;
+        glm::vec3 up = glm::vec4(world::Z, 1.0f) * drone.rotation;
+        auto left = glm::cross(up, forward);
+        if ((keyStates.find(GLFW_KEY_W) != keyStates.cend()) &&
+            keyStates.at(GLFW_KEY_W)) {
+            drone.position = drone.position + forward * delta * speed;
+        }
+        if ((keyStates.find(GLFW_KEY_A) != keyStates.cend()) &&
+            keyStates.at(GLFW_KEY_A)) {
+            drone.position = drone.position + left * delta * speed;
+        }
+        if ((keyStates.find(GLFW_KEY_D) != keyStates.cend()) &&
+            keyStates.at(GLFW_KEY_D)) {
+            drone.position = drone.position - left * delta * speed;
+        }
+        if ((keyStates.find(GLFW_KEY_S) != keyStates.cend()) &&
+            keyStates.at(GLFW_KEY_S)) {
+            drone.position = drone.position - forward * delta * speed;
+        }
+        if ((keyStates.find(GLFW_KEY_LEFT_SHIFT) != keyStates.cend()) &&
+            keyStates.at(GLFW_KEY_LEFT_SHIFT)) {
+            drone.position = drone.position - up * delta * speed;
+        }
+        if ((keyStates.find(GLFW_KEY_SPACE) != keyStates.cend()) &&
+            keyStates.at(GLFW_KEY_SPACE)) {
+            drone.position = drone.position + up * delta * speed;
+        }
+        if ((keyStates.find(GLFW_KEY_RIGHT) != keyStates.cend()) &&
+            keyStates.at(GLFW_KEY_RIGHT)) {
+            drone.rotation = glm::rotate(drone.rotation, +delta * speed, up);
+        }
+        if ((keyStates.find(GLFW_KEY_LEFT) != keyStates.cend()) &&
+            keyStates.at(GLFW_KEY_LEFT)) {
+            drone.rotation = glm::rotate(drone.rotation, -delta * speed, up);
+        }
+        if ((keyStates.find(GLFW_KEY_UP) != keyStates.cend()) &&
+            keyStates.at(GLFW_KEY_UP)) {
+            drone.rotation = glm::rotate(drone.rotation, +delta * speed, left);
+        }
+        if ((keyStates.find(GLFW_KEY_DOWN) != keyStates.cend()) &&
+            keyStates.at(GLFW_KEY_DOWN)) {
+            drone.rotation = glm::rotate(drone.rotation, -delta * speed, left);
+        }
+        if ((keyStates.find(GLFW_KEY_Q) != keyStates.cend()) &&
+            keyStates.at(GLFW_KEY_Q)) {
+            drone.rotation =
+                glm::rotate(drone.rotation, +delta * speed, forward);
+        }
+        if ((keyStates.find(GLFW_KEY_E) != keyStates.cend()) &&
+            keyStates.at(GLFW_KEY_E)) {
+            drone.rotation =
+                glm::rotate(drone.rotation, -delta * speed, forward);
+        }
         scene.buildInstanceGroups();
 
         // Draw to window
@@ -97,50 +159,22 @@ int main(int argc, char** argv) {
         glViewport(0, 0, w.getWidth(), w.getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 droneYawRot =
-            glm::rotate(glm::mat4{1.0f}, drone.rotation.x, world::Z);
-        glm::mat4 dronePitchRot =
-            glm::rotate(glm::mat4{1.0f}, drone.rotation.y, world::Y);
-        glm::mat4 droneRollRot =
-            glm::rotate(glm::mat4{1.0f}, drone.rotation.z, world::X);
-        glm::mat4 droneRot = droneYawRot * dronePitchRot * droneRollRot;
-
-        glm::mat4 cameraYawRot =
-            glm::rotate(droneRot, drone.cameras[0].rotation.x,
-                        glm::vec3{droneRot * glm::vec4{world::Z, 1.0f}});
-        glm::mat4 cameraPitchRot =
-            glm::rotate(droneRot, drone.cameras[0].rotation.y,
-                        glm::vec3{droneRot * glm::vec4{world::Y, 1.0f}});
-        glm::mat4 cameraRollRot =
-            glm::rotate(droneRot, drone.cameras[0].rotation.z,
-                        glm::vec3{droneRot * glm::vec4{world::X, 1.0f}});
-        glm::mat4 cameraRot = cameraYawRot * cameraPitchRot * cameraRollRot;
-
-        glm::mat4 cameraYawRotOnDrone =
-            glm::rotate(glm::mat4{1.0f}, drone.cameras[0].rotation.x, world::Z);
-        glm::mat4 cameraPitchRotOnDrone =
-            glm::rotate(glm::mat4{1.0f}, drone.cameras[0].rotation.y, world::Y);
-        glm::mat4 cameraRollRotOnDrone =
-            glm::rotate(glm::mat4{1.0f}, drone.cameras[0].rotation.z, world::X);
-        glm::mat4 cameraRotOnDrone =
-            cameraYawRotOnDrone * cameraPitchRotOnDrone * cameraRollRotOnDrone;
-
         renderer::Camera renderCamera(
-            drone.position +
-                glm::vec3{cameraRotOnDrone *
-                          glm::vec4{drone.cameras[0].position, 1.0f}},
-            glm::vec3{cameraRot * glm::vec4{world::Z, 1.0f}},
-            glm::vec3{cameraRot * glm::vec4{world::X, 1.0f}}, 0.1f, 50.0f,
-            M_PI / 2);
+            drone.position, glm::vec4(world::Z, 1.0f) * drone.rotation,
+            glm::vec4(world::X, 1.0f) * drone.rotation, 0.1f, 50.0f, M_PI / 2);
         scene.draw(resources, renderCamera, w.getRatio());
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
-        ImGui::SetNextWindowSize(ImVec2(200.0f, 200.0f));
+        ImGui::SetNextWindowSize(ImVec2(400.0f, 100.0f));
         ImGui::SetNextWindowBgAlpha(0.3f);
         ImGui::Begin("Debug", 0, ImGuiWindowFlags_NoDecoration);
-        ImGui::Text("test");
+        ImGui::Text("%f fps", actualFps);
+        ImGui::Text("Drone pos %f, %f, %f", drone.position.x, drone.position.y,
+                    drone.position.z);
+        glm::vec3 euler = glm::eulerAngles(glm::quat(drone.rotation));
+        ImGui::Text("Drone rot %f, %f, %f", euler.x, euler.y, euler.z);
         ImGui::End();
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

@@ -26,7 +26,7 @@ struct Camera {
 
 struct Drone {
     glm::vec3 position; // position relative to center of world
-    glm::vec3 rotation; // rotation relative to the world's coordinate system
+    glm::mat4 rotation; // rotation relative to the world's coordinate system
     std::vector<Camera> cameras;
 
 
