@@ -38,6 +38,7 @@ struct Scene {
     std::map<std::shared_ptr<Mesh>, std::vector<std::shared_ptr<Object>>>
         instanceGroups;
     void buildInstanceGroups() {
+        instanceGroups.clear();
         for (auto object : objects) {
             instanceGroups[object->getPMesh()].push_back(object);
         }

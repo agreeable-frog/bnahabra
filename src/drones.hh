@@ -17,7 +17,7 @@ namespace world {
 namespace drones {
 struct Camera {
     glm::vec3 position; // position relative to center of the drone
-    glm::vec3 rotation; // rotation relative to the drone's coordinate system
+    glm::mat4 rotation; // rotation relative to the drone's coordinate system
 
 
     Framebuffer framebuffer;

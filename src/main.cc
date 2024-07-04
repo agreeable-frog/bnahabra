@@ -33,10 +33,16 @@ int main(int argc, char** argv) {
     drones::Swarm swarm;
     drones::Drone drone;
     drone.position = glm::vec3{0.0f, 0.0f, 0.0f};
-    drone.rotation = glm::mat4(1.0f);
-    drones::Camera camera1{glm::vec3{0.0f, 0.0f, 0.0f},
-                           glm::vec3{0.0f, 0.0f, 0.0f},
-                           {960, 540, GL_RGBA}};
+    drone.rotation =
+        glm::rotate(glm::rotate(glm::rotate(glm::mat4(1.0f), 0.0f, world::X),
+                                0.0f, world::Y),
+                    0.0f, world::Z);
+    drones::Camera camera1{
+        glm::vec3{0.0f, 0.0f, 0.0f},
+        glm::rotate(glm::rotate(glm::rotate(glm::mat4(1.0f), 0.0f, world::X),
+                                0.0f, world::Y),
+                    0.0f, world::X),
+        {960, 540, GL_RGBA}};
     drone.cameras.push_back(camera1);
     swarm.drones.push_back(drone);
     std::shared_ptr<RtspPipeline> rtspPipeline1 =
@@ -160,8 +166,14 @@ int main(int argc, char** argv) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         renderer::Camera renderCamera(
-            drone.position, glm::vec4(world::Z, 1.0f) * drone.rotation,
-            glm::vec4(world::X, 1.0f) * drone.rotation, 0.1f, 50.0f, M_PI / 2);
+            drone.position +
+                glm::vec3(drone.rotation *
+                          glm::vec4(drone.cameras[0].position, 1.0f)),
+            glm::vec4(world::Z, 1.0f) * drone.cameras[0].rotation *
+                drone.rotation,
+            glm::vec4(world::X, 1.0f) * drone.cameras[0].rotation *
+                drone.rotation,
+            0.1f, 50.0f, M_PI / 2);
         scene.draw(resources, renderCamera, w.getRatio());
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
