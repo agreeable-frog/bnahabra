@@ -31,27 +31,26 @@ int main(int argc, char** argv) {
 
     // Define drones
     drones::Swarm swarm;
-    drones::Drone drone;
-    drone.position = glm::vec3{0.0f, 0.0f, 0.0f};
-    drone.rotation =
+    std::shared_ptr<drones::Drone> drone1 = std::make_shared<drones::Drone>();
+    drone1->position = glm::vec3{0.0f, 0.0f, 0.0f};
+    drone1->rotation =
         glm::rotate(glm::rotate(glm::rotate(glm::mat4(1.0f), 0.0f, world::X),
                                 0.0f, world::Y),
                     0.0f, world::Z);
-    drones::Camera camera1{
-        glm::vec3{0.0f, 0.0f, 0.0f},
+    drone1->ip = "127.0.0.1";
+    drone1->port = "8000";
+    std::shared_ptr<drones::Camera> camera1 =
+        std::make_shared<drones::Camera>();
+    camera1->position = glm::vec3{0.0f, 0.0f, 0.0f};
+    camera1->rotation =
         glm::rotate(glm::rotate(glm::rotate(glm::mat4(1.0f), 0.0f, world::X),
                                 0.0f, world::Y),
-                    0.0f, world::X),
-        {960, 540, GL_RGBA}};
-    drone.cameras.push_back(camera1);
-    swarm.drones.push_back(drone);
-    std::shared_ptr<RtspPipeline> rtspPipeline1 =
-        std::make_shared<RtspPipeline>("127.0.0.1", "8000", "test",
-                                       camera1.framebuffer.getWidth(),
-                                       camera1.framebuffer.getHeight());
-    rtspPipeline1->start();
-    std::vector<std::shared_ptr<RtspPipeline>> rtspPipelines = {rtspPipeline1};
-    size_t mainCameraIndex = 0;
+                    0.0f, world::X);
+    camera1->pFramebuffer = std::make_shared<Framebuffer>(960, 540, GL_RGBA);
+    camera1->streamMountPoint = "test";
+    drone1->cameras.push_back(camera1);
+    drone1->build();
+    swarm.drones.push_back(drone1);
 
     // Setup resources
     auto cube = std::make_shared<CubeMesh>();
@@ -105,58 +104,62 @@ int main(int argc, char** argv) {
         auto& keyStates = w.getKeyStates();
         float speed = 0.5f;
         float delta = (float)deltaTime;
-        glm::vec3 forward = glm::vec4(world::X, 1.0f) * drone.rotation;
-        glm::vec3 up = glm::vec4(world::Z, 1.0f) * drone.rotation;
+        glm::vec3 forward = glm::vec4(world::X, 1.0f) * drone1->rotation;
+        glm::vec3 up = glm::vec4(world::Z, 1.0f) * drone1->rotation;
         auto left = glm::cross(up, forward);
         if ((keyStates.find(GLFW_KEY_W) != keyStates.cend()) &&
             keyStates.at(GLFW_KEY_W)) {
-            drone.position = drone.position + forward * delta * speed;
+            drone1->position = drone1->position + forward * delta * speed;
         }
         if ((keyStates.find(GLFW_KEY_A) != keyStates.cend()) &&
             keyStates.at(GLFW_KEY_A)) {
-            drone.position = drone.position + left * delta * speed;
+            drone1->position = drone1->position + left * delta * speed;
         }
         if ((keyStates.find(GLFW_KEY_D) != keyStates.cend()) &&
             keyStates.at(GLFW_KEY_D)) {
-            drone.position = drone.position - left * delta * speed;
+            drone1->position = drone1->position - left * delta * speed;
         }
         if ((keyStates.find(GLFW_KEY_S) != keyStates.cend()) &&
             keyStates.at(GLFW_KEY_S)) {
-            drone.position = drone.position - forward * delta * speed;
+            drone1->position = drone1->position - forward * delta * speed;
         }
         if ((keyStates.find(GLFW_KEY_LEFT_SHIFT) != keyStates.cend()) &&
             keyStates.at(GLFW_KEY_LEFT_SHIFT)) {
-            drone.position = drone.position - up * delta * speed;
+            drone1->position = drone1->position - up * delta * speed;
         }
         if ((keyStates.find(GLFW_KEY_SPACE) != keyStates.cend()) &&
             keyStates.at(GLFW_KEY_SPACE)) {
-            drone.position = drone.position + up * delta * speed;
+            drone1->position = drone1->position + up * delta * speed;
         }
         if ((keyStates.find(GLFW_KEY_RIGHT) != keyStates.cend()) &&
             keyStates.at(GLFW_KEY_RIGHT)) {
-            drone.rotation = glm::rotate(drone.rotation, +delta * speed, up);
+            drone1->rotation =
+                glm::rotate(drone1->rotation, +delta * speed, up);
         }
         if ((keyStates.find(GLFW_KEY_LEFT) != keyStates.cend()) &&
             keyStates.at(GLFW_KEY_LEFT)) {
-            drone.rotation = glm::rotate(drone.rotation, -delta * speed, up);
+            drone1->rotation =
+                glm::rotate(drone1->rotation, -delta * speed, up);
         }
         if ((keyStates.find(GLFW_KEY_UP) != keyStates.cend()) &&
             keyStates.at(GLFW_KEY_UP)) {
-            drone.rotation = glm::rotate(drone.rotation, +delta * speed, left);
+            drone1->rotation =
+                glm::rotate(drone1->rotation, +delta * speed, left);
         }
         if ((keyStates.find(GLFW_KEY_DOWN) != keyStates.cend()) &&
             keyStates.at(GLFW_KEY_DOWN)) {
-            drone.rotation = glm::rotate(drone.rotation, -delta * speed, left);
+            drone1->rotation =
+                glm::rotate(drone1->rotation, -delta * speed, left);
         }
         if ((keyStates.find(GLFW_KEY_Q) != keyStates.cend()) &&
             keyStates.at(GLFW_KEY_Q)) {
-            drone.rotation =
-                glm::rotate(drone.rotation, +delta * speed, forward);
+            drone1->rotation =
+                glm::rotate(drone1->rotation, +delta * speed, forward);
         }
         if ((keyStates.find(GLFW_KEY_E) != keyStates.cend()) &&
             keyStates.at(GLFW_KEY_E)) {
-            drone.rotation =
-                glm::rotate(drone.rotation, -delta * speed, forward);
+            drone1->rotation =
+                glm::rotate(drone1->rotation, -delta * speed, forward);
         }
         scene.buildInstanceGroups();
 
@@ -166,13 +169,13 @@ int main(int argc, char** argv) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         renderer::Camera renderCamera(
-            drone.position +
-                glm::vec3(drone.rotation *
-                          glm::vec4(drone.cameras[0].position, 1.0f)),
-            glm::vec4(world::Z, 1.0f) * drone.cameras[0].rotation *
-                drone.rotation,
-            glm::vec4(world::X, 1.0f) * drone.cameras[0].rotation *
-                drone.rotation,
+            drone1->position +
+                glm::vec3(drone1->rotation *
+                          glm::vec4(drone1->cameras[0]->position, 1.0f)),
+            glm::vec4(world::Z, 1.0f) * drone1->cameras[0]->rotation *
+                drone1->rotation,
+            glm::vec4(world::X, 1.0f) * drone1->cameras[0]->rotation *
+                drone1->rotation,
             0.1f, 50.0f, M_PI / 2);
         scene.draw(resources, renderCamera, w.getRatio());
         ImGui_ImplOpenGL3_NewFrame();
@@ -183,47 +186,59 @@ int main(int argc, char** argv) {
         ImGui::SetNextWindowBgAlpha(0.3f);
         ImGui::Begin("Debug", 0, ImGuiWindowFlags_NoDecoration);
         ImGui::Text("%f fps", actualFps);
-        ImGui::Text("Drone pos %f, %f, %f", drone.position.x, drone.position.y,
-                    drone.position.z);
-        glm::vec3 euler = glm::eulerAngles(glm::quat(drone.rotation));
+        ImGui::Text("Drone pos %f, %f, %f", drone1->position.x,
+                    drone1->position.y, drone1->position.z);
+        glm::vec3 euler = glm::eulerAngles(glm::quat(drone1->rotation));
         ImGui::Text("Drone rot %f, %f, %f", euler.x, euler.y, euler.z);
         ImGui::End();
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         // Draw to framebuffers
-        /*         for (size_t i = 0; i < cameras.size(); i++) {
-                    glBindFramebuffer(GL_DRAW_FRAMEBUFFER,
-           framebuffers[i].getFbo()); glViewport(0, 0,
-           framebuffers[i].getWidth(), framebuffers[i].getHeight());
-                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                    scene.draw(resources, cameras[i],
-                               framebuffers[i].getWidth() /
-                                   (float)framebuffers[i].getHeight());
-                    ImGui_ImplOpenGL3_NewFrame();
-                    ImGui_ImplGlfw_NewFrame();
-                    ImGui::NewFrame();
-                    ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
-                    ImGui::SetNextWindowSize(ImVec2(200.0f, 200.0f));
-                    ImGui::SetNextWindowBgAlpha(0.3f);
-                    ImGui::Begin("Debug", 0, ImGuiWindowFlags_NoDecoration);
-                    ImGui::Text("Camera %li", i);
-                    ImGui::End();
-                    ImGui::Render();
-                    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-                    glBindFramebuffer(GL_READ_FRAMEBUFFER,
-           framebuffers[i].getFbo()); auto data = framebuffers[i].read(); Image
-           image = Image{data, framebuffers[i].getWidth(),
-                              framebuffers[i].getHeight(), 3 * sizeof(u_char),
-           frameId}; rtspPipelines[i]->getSwapchain().present(image);
-                } */
+        for (const auto& drone : swarm.drones) {
+            for (const auto& camera : drone->cameras) {
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER,
+                                  camera->pFramebuffer->getFbo());
+                glViewport(0, 0, camera->pFramebuffer->getWidth(),
+                           camera->pFramebuffer->getHeight());
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                renderer::Camera renderCamera(
+                    drone->position +
+                        glm::vec3(drone->rotation *
+                                  glm::vec4(camera->position, 1.0f)),
+                    glm::vec4(world::Z, 1.0f) * camera->rotation *
+                        drone->rotation,
+                    glm::vec4(world::X, 1.0f) * camera->rotation *
+                        drone->rotation,
+                    0.1f, 50.0f, M_PI / 2);
+                scene.draw(resources, renderCamera,
+                           camera->pFramebuffer->getWidth() /
+                               (float)camera->pFramebuffer->getHeight());
+                ImGui_ImplOpenGL3_NewFrame();
+                ImGui_ImplGlfw_NewFrame();
+                ImGui::NewFrame();
+                ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+                ImGui::SetNextWindowSize(ImVec2(200.0f, 200.0f));
+                ImGui::SetNextWindowBgAlpha(0.3f);
+                ImGui::Begin("Debug", 0, ImGuiWindowFlags_NoDecoration);
+                static uint i = 0;
+                ImGui::Text("Camera %i", ++i);
+                ImGui::End();
+                ImGui::Render();
+                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+                glBindFramebuffer(GL_READ_FRAMEBUFFER,
+                                  camera->pFramebuffer->getFbo());
+                if (drone->streamer->getSwapchain().needsData()) {
+                    u_char* data = camera->pFramebuffer->read();
+                    drone->streamer->getSwapchain().present(
+                        data, camera->pFramebuffer->getWidth(),
+                        camera->pFramebuffer->getHeight(), frameId);
+                }
+            }
+        }
 
         glfwSwapBuffers(w.getHandle());
         frameId++;
-    }
-
-    for (auto rtspPipeline : rtspPipelines) {
-        rtspPipeline->stop();
     }
 
     ImGui_ImplOpenGL3_Shutdown();

@@ -14,6 +14,7 @@ class RtspPipeline {
 public:
     RtspPipeline(const std::string& address, const std::string& port,
                  const std::string& mountPoint, size_t width, size_t height);
+    ~RtspPipeline();
     void start();
     void stop();
     Swapchain& getSwapchain() {

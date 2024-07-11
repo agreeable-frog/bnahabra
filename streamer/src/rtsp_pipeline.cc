@@ -117,14 +117,14 @@ void RtspPipeline::feedLoop(GstElement* appsrc) {
     GstClockTime timestamp = 0;
     GstFlowReturn ret;
     GstBuffer* buffer;
-    Image image;
+    u_char* image;
 
     while (_running) {
         if (_needData) {
             buffer = gst_buffer_new_and_alloc(_width * _height * _depth /
                                               sizeof(u_char));
             image = _swapchain.take();
-            gst_buffer_fill(buffer, 0, image.data.data(),
+            gst_buffer_fill(buffer, 0, image,
                             _width * _height * _depth / sizeof(u_char));
             GST_BUFFER_PTS(buffer) = timestamp;
             GST_BUFFER_DURATION(buffer) =
@@ -133,6 +133,11 @@ void RtspPipeline::feedLoop(GstElement* appsrc) {
             timestamp += GST_BUFFER_DURATION(buffer);
             g_signal_emit_by_name(appsrc, "push-buffer", buffer, &ret);
             gst_buffer_unref(buffer);
+            delete image;
         }
     }
+}
+
+RtspPipeline::~RtspPipeline() {
+    stop();
 }

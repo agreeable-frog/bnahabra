@@ -7,14 +7,6 @@
 #include <atomic>
 #include <condition_variable>
 
-struct Image {
-    std::vector<u_char> data;
-    size_t width;
-    size_t height;
-    size_t depth;
-    uint id;
-};
-
 class Swapchain {
 public:
     Swapchain(size_t width, size_t height, size_t depth)
@@ -25,11 +17,12 @@ public:
           _mutex(),
           _var() {
     }
-    void present(const Image& image);
-    Image take();
+    bool needsData() const;
+    void present(u_char* data, size_t width, size_t height, int frameId);
+    u_char* take();
 
 private:
-    std::queue<Image> _queue;
+    std::queue<u_char*> _queue;
     size_t _width;
     size_t _height;
     size_t _depth;

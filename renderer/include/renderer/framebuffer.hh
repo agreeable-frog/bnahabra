@@ -12,7 +12,7 @@ public:
     Framebuffer& operator=(const Framebuffer&);
     ~Framebuffer();
     void bind(GLenum bind);
-    std::vector<u_char> read();
+    u_char* read();
     GLuint getFbo() const {
         return _fbo;
     }
