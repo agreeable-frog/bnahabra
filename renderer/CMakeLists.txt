@@ -11,7 +11,6 @@ message( STATUS "${PROJECT_NAME} Build type is : ${CMAKE_BUILD_TYPE}")
 
 add_subdirectory(imgui)
 add_subdirectory(stb)
-add_subdirectory(OBJ_loader)
 
 find_package(OpenGL REQUIRED COMPONENTS OpenGL)
 find_package(GLEW REQUIRED)
@@ -31,7 +30,6 @@ add_library(${PROJECT_NAME} STATIC ${CMAKE_CURRENT_SOURCE_DIR}/src/window.cc
                                    ${CMAKE_CURRENT_SOURCE_DIR}/src/object.cc
                                    ${CMAKE_CURRENT_SOURCE_DIR}/src/texture2D.cc
                                    ${CMAKE_CURRENT_SOURCE_DIR}/src/texture_atlas.cc
-                                   ${CMAKE_CURRENT_SOURCE_DIR}/src/obj_loader.cc
                                    ${CMAKE_CURRENT_SOURCE_DIR}/src/framebuffer.cc)
 add_library(bnahabra::renderer ALIAS ${PROJECT_NAME})
 
@@ -46,4 +44,4 @@ message(STATUS "Did not find imported target for glm")
 set(${GLM_LIB} glm)
 endif()
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Imgui::Imgui stb::stb glfw ${CMAKE_DL_LIBS} ${OPENGL_LIBRARIES} GLEW::GLEW ${GLM_LIB} obj-loader::obj-loader)
+target_link_libraries(${PROJECT_NAME} PUBLIC Imgui::Imgui stb::stb glfw ${CMAKE_DL_LIBS} ${OPENGL_LIBRARIES} GLEW::GLEW ${GLM_LIB})
